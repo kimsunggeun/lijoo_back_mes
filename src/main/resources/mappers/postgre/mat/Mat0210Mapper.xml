@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0210Dao">
+        
+	<!-- 창고별 재고현황 조회 -->
+    <select id="getMat0210" parameterType="kr.co.igns.business.mat.model.mat0210.Mat0210ReqDto"
+    					resultType="kr.co.igns.business.mat.model.mat0210.Mat0210VO">
+        select	row_number() over(order by a.loc_code, a.part_no) as id, 
+        		a.com_code as comCode,
+        		a.fac_code as facCode,
+        		a.loc_code as locCode,
+        		b.loc_name as locName,
+        		a.part_no as partNo,
+        		c.part_name as partName,
+        		a.stock_qty as stockQty,
+        		coalesce(a.stock_amount, '0') as stockAmount
+		from	mat0020 as a
+		join	bas0033 as b on a.com_code = b.com_code and a.fac_code = b.fac_code and a.loc_code = b.loc_code
+		join	bas0040 as c on a.com_code = c.com_code and a.part_no = c.part_no
+		where	1=1
+	 	 <if test='comCode != null and !comCode.equals("")'>
+	       	and a.com_code  = #{comCode}
+	     </if>
+	 	 <if test='facCode != null and !facCode.equals("")'>
+	 	 	and a.fac_code = #{facCode}
+	 	 </if>
+	 	 <if test='locCode != null and !locCode.equals("")'>
+	 	 	and a.loc_code = #{locCode}
+	 	 </if>
+	 	 <if test='partNo != null and !partNo.equals("")'>
+	   	 	and a.part_no LIKE '%' || #{partNo} || '%'
+	   	 </if>
+		order by a.loc_code, a.part_no
+    </select>
+    
+	<!-- 재고 정보 마스터 엄격한 조회 -->
+    <select id="getStrictMat0210" parameterType="kr.co.igns.business.mat.model.mat0210.Mat0210ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0210.Mat0210VO">
+        select	a.*
+		from	mat0020 as a
+		where	a.com_code  = #{comCode}
+	 	and 	a.fac_code = #{facCode}
+	 	and 	a.loc_code = #{locCode}
+	   	and 	a.part_no = #{partNo}	  
+    </select>    
+    
+    <insert id="createMat0210" parameterType="kr.co.igns.business.mat.model.mat0210.Mat0210VO">
+    	insert into mat0020
+    	(
+    		  com_code
+			, fac_code
+			, loc_code
+			, part_no
+			, stock_qty
+			, stock_amount
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{locCode}
+			, #{partNo}
+			, #{stockQty}
+			, #{stockAmount}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <update id="updateMat0210" parameterType="kr.co.igns.business.mat.model.mat0210.Mat0210VO">
+		update mat0020
+		   set stock_qty	= #{stockQty}
+			 , stock_amount	= #{stockAmount}
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where	1=1
+	 	 <if test='comCode != null and !comCode.equals("")'>
+	       	and com_code  = #{comCode}
+	     </if>
+	 	 <if test='facCode != null and !facCode.equals("")'>
+	 	 	and fac_code = #{facCode}
+	 	 </if>
+	 	 <if test='locCode != null and !locCode.equals("")'>
+	 	 	and loc_code = #{locCode}
+	 	 </if>
+	 	 <if test='partNo != null and !partNo.equals("")'>
+	   	 	and part_no = #{partNo}
+	   	 </if>
+    </update>
+    
+	<!-- 창고별 재고상세현황 조회 -->
+    <select id="getMat0210Detail" parameterType="kr.co.igns.business.mat.model.mat0210.Mat0210ReqDto"
+    					resultType="kr.co.igns.business.mat.model.mat0210.Mat0210VO">
+        select	row_number() over(order by a.part_no asc, a.event_cd asc, a.lot_no asc, a.lot_detail asc) as id, 
+        		a.com_code as comCode,
+        		a.fac_code as facCode,
+        		a.loc_code as locCode,
+        		b.loc_name as locName,
+        		fn_comcodenm(a.com_code, 'PART_TYPE', a.stock_type) as stockType,
+        		fn_comcodenm(a.com_code, 'EVENT_CD', a.event_cd) as eventCd,
+        		a.part_no as partNo,
+        		c.part_name as partName,
+        		a.stock_qty as stockQty,
+        		coalesce(a.stock_amount, '0') as stockAmount,
+        		a.regi_date as regiDate,
+        		a.lot_no as lotNo,
+        		a.lot_detail as lotDetail,
+        		a.user_flag as userFlag,
+        		a.make_date as makeDate,
+        		a.maker as maker,
+        		a.edit_date as editDate,
+        		a.editor as editor
+		from	mat0021 as a
+		join	bas0033 as b on a.com_code = b.com_code and a.fac_code = b.fac_code and a.loc_code = b.loc_code
+		join	bas0040 as c on a.com_code = c.com_code and a.part_no = c.part_no
+		where	1=1
+			and a.user_flag = 'Y'
+	 	 <if test='comCode != null and !comCode.equals("")'>
+	       	and a.com_code  = #{comCode}
+	     </if>
+	 	 <if test='facCode != null and !facCode.equals("")'>
+	 	 	and a.fac_code = #{facCode}
+	 	 </if>
+	 	 <if test='locCode != null and !locCode.equals("")'>
+	 	 	and a.loc_code = #{locCode}
+	 	 </if>
+	 	 <if test='partNo != null and !partNo.equals("")'>
+	   	 	and a.part_no = #{partNo}
+	   	 </if>
+		order by a.part_no asc, a.event_cd asc, a.lot_no asc, a.lot_detail asc 
+    </select>
+    
+	<!-- 재고 정보 상세 엄격한 조회 -->
+    <select id="getStrictMat0210Detail" parameterType="kr.co.igns.business.mat.model.mat0210.Mat0210ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0210.Mat0210VO">
+        select	a.*
+		from	mat0021 as a
+		where	a.com_code  = #{comCode}
+	 	and 	a.fac_code = #{facCode}
+	 	and 	a.loc_code = #{locCode}
+	   	and 	a.part_no = #{partNo}
+	   	and		a.lot_detail = #{lotDetail}
+    </select>    
+    
+    <insert id="createMat0210Detail" parameterType="kr.co.igns.business.mat.model.mat0210.Mat0210VO">
+    	insert into mat0021
+    	(
+    		  com_code
+			, fac_code
+			, loc_code
+			, stock_type
+			, event_cd
+			, part_no
+			, stock_qty
+			, stock_amount
+			, regi_date
+			, lot_no
+			, lot_detail
+			, user_flag
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{locCode}
+			, #{stockType}
+			, #{eventCd}
+			, #{partNo}
+			, #{stockQty}
+			, #{stockAmount}
+			, #{regiDate}
+			, #{lotNo}
+			, #{lotDetail}
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <update id="updateMat0210Detail" parameterType="kr.co.igns.business.mat.model.mat0210.Mat0210VO">
+		update mat0021
+		   set stock_type	= #{stockType}
+		   	 , event_cd		= #{eventCd}
+			 , stock_qty	= #{stockQty}
+			 , stock_amount	= #{stockAmount}
+			 , user_Flag	= #{userFlag}
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where	1=1
+	 	 <if test='comCode != null and !comCode.equals("")'>
+	       	and com_code  = #{comCode}
+	     </if>
+	 	 <if test='facCode != null and !facCode.equals("")'>
+	 	 	and fac_code = #{facCode}
+	 	 </if>
+	 	 <if test='locCode != null and !locCode.equals("")'>
+	 	 	and loc_code = #{locCode}
+	 	 </if>
+	 	 <if test='partNo != null and !partNo.equals("")'>
+	   	 	and part_no = #{partNo}
+	   	 </if>
+	 	 <if test='lotDetail != null and !lotDetail.equals("")'>
+	   	 	and lot_detail = #{lotDetail}
+	   	 </if>	   	 	   	 
+    </update>       
+    
+    <!-- 전산번호로 부터 창고위치 찾기 -->
+    <select id="getLocCodeFromLotDetail" parameterType="String" resultType="String">
+    	select	loc_code
+    	from	mat0021
+    	where	lot_detail = #{value}
+    </select> 
+</mapper>

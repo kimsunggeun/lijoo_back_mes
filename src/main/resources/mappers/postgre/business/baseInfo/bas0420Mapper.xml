@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.baseInfo.bas0420.dao.postgre.Bas0420Dao">
+
+    <!-- 검사유형 GET -->
+    <select id="getInspecType" parameterType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420Dto" resultType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420VO">        
+		select  sort_flag as sortFlag, com_code as comCode, sys_code as insCode, sys_name as insCodeName, part_no as partNo, part_name as partName
+		from (
+				select b.sort_flag, a.com_code, b.sys_code, b.sys_name, a.part_no, a.part_name 
+				from bas0040 a
+				left join bas0011 b on a.com_code = b.com_code 
+									and b.code = 'INPT'
+									and b.sys_code = 'IQC'
+				where a.com_code = #{comCode}
+				and a.in_insp = 'Y'
+				UNION
+				select b.sort_flag, a.com_code, b.sys_code, b.sys_name, a.part_no, a.part_name 
+				from bas0040 a
+				left join bas0011 b on a.com_code = b.com_code 
+									and b.code = 'INPT'
+									and b.sys_code = 'LQC'
+				where a.com_code = #{comCode}
+				and a.pro_insp = 'Y'
+				union 
+				select b.sort_flag, a.com_code, b.sys_code, b.sys_name, a.part_no, a.part_name 
+				from bas0040 a
+				left join bas0011 b on a.com_code = b.com_code 
+									and b.code = 'INPT'
+									and b.sys_code = 'PQC'
+				where a.com_code = #{comCode}
+				and a.rot_insp = 'Y'				
+				union 
+				select b.sort_flag, a.com_code, b.sys_code, b.sys_name, a.part_no, a.part_name 
+				from bas0040 a
+				left join bas0011 b on a.com_code = b.com_code 
+									and b.code = 'INPT'
+									and b.sys_code = 'OQC'
+				where a.com_code = #{comCode}
+				and a.out_insp = 'Y'				
+				union
+				select b.sort_flag, a.com_code, b.sys_code, b.sys_name, a.part_no, a.part_name 
+				from bas0040 a
+				left join bas0011 b on a.com_code = b.com_code 
+									and b.code = 'INPT'
+									and b.sys_code = 'FQC'
+				where a.com_code = #{comCode}
+				and a.last_insp = 'Y'
+				union 
+				select b.sort_flag, a.com_code, b.sys_code, b.sys_name, a.part_no, a.part_name 
+				from bas0040 a
+				left join bas0011 b on a.com_code = b.com_code 
+									and b.code = 'INPT'
+									and b.sys_code = 'VQC'
+				where a.com_code = #{comCode}
+				and a.sup_insp = 'Y'
+		) AA
+		<where>
+			<if test="insCode != null and insCode != ''">
+				and AA.sys_code = #{insCode}
+			</if>
+			<if test="partNo != null and partNo != ''">
+				and AA.part_no like '%'||#{partNo}||'%'
+			</if>
+		</where>
+		order by AA.sort_flag, AA.part_no;
+    </select>
+      
+    <!-- 품질기준정보 GET -->
+    <select id="getQuaStanInfo" parameterType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420Dto" resultType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420VO">        
+		select A.ins_code as insCode, A.ins_type as insType, A.ins_meth as insMeth, A.jug_codeh as jugCodeh, B.insp_no as inspNo, B.ins_unit as insUnit,
+				B.ins_base as insBase, B.ins_upp as insUpp, B.ins_low as insLow, B.ins_cnt as insCnt, B.remark , B.user_flag as userFlag, 
+				fn_username(B.com_code, B.maker) as maker, B.make_date, fn_username(B.com_code, B.editor) as editor, B.edit_date 
+		from BAS0060 A
+		left join bas0061 b on A.com_code = B.com_code 
+							and A.ins_code = b.ins_code 
+							and a.ins_type = b.ins_type 
+							and a.ins_meth = b.ins_meth 
+							and b.part_no = #{partNo}
+		where A.com_code = #{comCode}
+		and a.ins_code = #{insCode}
+		order by b.insp_no;
+    </select>  
+    
+     	<!-- 품질기준정보 set -->
+    <insert id="setQuaStanInfo" parameterType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420VO">
+	    WITH UPSERT AS (
+			UPDATE bas0061
+				SET jug_codeh = #{jugCodeh}, 
+					ins_unit = #{insUnit}, 
+					ins_base = #{insBase}, 
+					ins_upp = #{insUpp}, 
+					ins_low = #{insLow}, 
+					ins_cnt = #{insCnt}, 
+					remark = #{remark}, 
+					user_flag = #{userFlag}, 
+					edit_date = now(), 
+					editor = #{maker}
+			  WHERE com_code = #{comCode} 
+			    AND part_no = #{partNo} 
+			    AND insp_no = #{inspNo} 
+			    AND ins_code = #{insCode}
+			    AND ins_type = #{insType} 
+			    AND ins_meth = #{insMeth} RETURNING * )
+			insert into bas0061 (com_code, part_no, insp_no, ins_code, ins_type, ins_meth, jug_codeh, ins_unit, ins_base, ins_upp, ins_low, 
+								ins_cnt, remark, user_flag, make_date, maker)
+			select #{comCode}, #{partNo}, #{inspNo}, #{insCode}, #{insType}, #{insMeth}, #{jugCodeh}, #{insUnit}, #{insBase}, #{insUpp}, #{insLow},
+					#{insCnt}, #{remark}, #{userFlag}, now(), #{maker}
+		where not exists (select * from UPSERT);
+    </insert>
+    
+    <!-- 검사내역 확인 -->
+    <select id="getInsCheck" parameterType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420Dto" resultType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420VO">        
+		SELECT count(*) as chk
+		  FROM qat0010
+		 WHERE com_code = #{comCode}
+		   AND part_no = #{partNo} 
+		   AND insp_no = #{inspNo} 
+		   AND ins_code = #{insCode} 
+		   AND ins_type = #{insType} 
+		   AND ins_meth = #{insMeth};
+    </select>
+    
+    <!-- 품질기준정보 삭제 -->
+    <delete id="delQuaStanInfo" parameterType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420Dto">
+		DELETE FROM bas0061
+		WHERE com_code = #{comCode} 
+		AND part_no = #{partNo} 
+		AND insp_no = #{inspNo} 
+		AND ins_code = #{insCode} 
+		AND ins_type = #{insType} 
+		AND ins_meth = #{insMeth};
+    </delete>
+    
+    <select id="getPartList" parameterType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420Dto" resultType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420PartVO">
+		select a.com_code
+			 , a.part_no
+     		 , a.part_name
+     		 , a.spec
+     		 , (
+     		 	select count(*)
+     		 	  from bas0061
+     		 	 where com_code = #{comCode}
+     		 	   and part_no = a.part_no
+     		 	   and ins_code = #{insCode}
+     		 	) as count
+  		  from bas0040 a
+     left join bas0011 b on b.com_code = a.com_code
+     					and b.codegr = 'QAT'
+     					and b.code = 'INPT'
+     					and b.sys_code = #{insCode}
+     <where>
+    		and a.com_code = #{comCode}
+    		and a.part_no not in (#{partNo})
+	     	<if test="insCode == 'IQC' ">
+	     		and a.in_insp = 'Y'
+	     	</if>
+	     	<if test="insCode == 'LQC' ">
+	     		and a.pro_insp = 'Y'     		
+	     	</if>
+	     	<if test="insCode == 'OQC' ">
+	     		and a.out_insp = 'Y'
+	     	</if>
+	     	<if test="insCode == 'PQC' ">
+	     		and a.rot_insp = 'Y'
+	     	</if>
+	     	<if test="insCode == 'VQC' ">
+	     		and a.sup_insp = 'Y'
+	     	</if>
+	     	<if test="insCode == 'FQC' ">
+	     		and a.last_insp = 'Y'
+	     	</if>
+     </where>
+     order by a.part_no  					
+    </select>
+    
+    <update id="setPartCopy" parameterType="kr.co.igns.business.baseInfo.bas0420.model.Bas0420CopyDto">
+    	CALL sp_qualcopy(#{comCode},#{selPartNo}, #{tarPartNo}, #{selInsCode}, #{maker});
+    </update>    
+ 
+</mapper>

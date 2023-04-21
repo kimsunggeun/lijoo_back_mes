@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0120Dao">
+	<select id="getPro0120" parameterType="kr.co.igns.business.ProdManage.model.pro0120.Pro0120ReqDto" resultType="kr.co.igns.business.ProdManage.model.pro0120.Pro0120VO">
+		select a.*
+			 , b.part_name 
+			 , b.spec as partSpec
+		from pro0026 a
+		join bas0040 b on a.com_code = b.com_code
+					  and a.part_no = b.part_no 
+		<where>
+		
+			<if test="facCode != null and facCode != ''">
+				AND FAC_CODE = #{facCode}
+			</if>
+			<if test="proCode != null and proCode != ''">
+				AND PRO_CODE = #{proCode}
+			</if>
+			<if test="workCode != null and workCode != ''">
+				AND WORK_CODE = #{workCode}
+			</if>
+			<if test="workDecode != null and workDecode != ''">
+				AND WORK_DECODE = #{workDecode}
+			</if>
+			<if test="partNo != null and partNo != ''">
+				and a.part_no like '%'||#{partNo}||'%'
+			</if>
+		</where>
+		ORDER BY
+			a.make_date ASC
+	</select>
+	
+	<select id="getWorkDecode" parameterType="kr.co.igns.business.ProdManage.model.pro0120.Pro0120ReqDto" resultType="kr.co.igns.business.ProdManage.model.pro0120.Pro0120VO">
+		select work_decode, work_dename from bas0035
+		where com_code = #{ comCode }
+		  and fac_code = #{ facCode }
+	</select>
+</mapper>

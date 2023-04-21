@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.AccountDao">
+        
+	<!-- 거래처코드 중복확인 -->
+	<select id="checkAccountCd" parameterType="kr.co.igns.framework.comm.model.AccountReqDto" 
+    					resultType="java.lang.Integer">
+        select count(*)
+		from bas0023 a
+		where a.com_code = #{comCode}
+		  AND a.cust_code = #{custCode}
+    </select>
+        
+    <!-- 거래처 전체 조회 -->
+    <select id="getAccount" parameterType="kr.co.igns.framework.comm.model.AccountReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.AccountVO">
+        select a.*
+		from bas0023 a
+		where a.com_code = #{comCode}
+		order by a.cust_code
+    </select>
+    
+    <insert id="createAccount" parameterType="kr.co.igns.framework.comm.model.AccountVO">
+    	insert into bas0023
+			(com_code
+			, cust_code
+			, cust_name
+			, cust_type
+			, mat_type
+			, cust_no
+			, name
+			, con_type
+			, sec_type
+			, post_no
+			, addr
+			, tel
+			, fax
+			, email
+			, man_name
+			, man_tel
+			, man_addr
+			, user_flag
+			, remark
+			, make_date
+			, maker
+			)
+		values(
+			#{comCode}
+			, #{custCode}
+			, #{custName}
+			, #{custType}
+			, #{matType}
+			, #{custNo}
+			, #{name}
+			, #{conType}
+			, #{secType}
+			, #{postNo}
+			, #{addr}
+			, #{tel}
+			, #{fax}
+			, #{email}
+			, #{manName}
+			, #{manTel}
+			, #{manAddr}
+			, #{userFlag}
+			, #{remark}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <update id="updateAccount" parameterType="kr.co.igns.framework.comm.model.AccountVO">
+    	update bas0023
+			set cust_name		= #{custName}
+				, cust_type		= #{custType}
+				, mat_type 		= #{matType} 
+				, cust_no  		= #{custNo}  
+				, name     		= #{name}    
+				, con_type 		= #{conType} 
+				, sec_type 		= #{secType} 
+				, post_no  		= #{postNo}  
+				, addr     		= #{addr}    
+				, tel      		= #{tel}     
+				, fax      		= #{fax}     
+				, email    		= #{email}   
+				, man_name 		= #{manName} 
+				, man_tel  		= #{manTel}  
+				, man_addr 		= #{manAddr} 
+				, user_flag		= #{userFlag}
+				, remark		= #{remark}  
+				, edit_date		= now()
+				, editor		= #{editor}
+			where com_code 		= #{comCode}
+			  and cust_code 	= #{custCode} 
+    </update>
+    
+    <delete id="deleteAccount" parameterType="kr.co.igns.framework.comm.model.AccountVO">
+    	delete from bas0023 
+    	where com_code = #{comCode}
+	  	  and cust_code = #{custCode} 
+    </delete>
+    
+    <select id="custDeleteCheck_Bas" parameterType="kr.co.igns.framework.comm.model.AccountVO" 
+    								resultType="kr.co.igns.framework.comm.model.AccountVO">
+	    select * from bas0044
+	    where com_code = #{comCode}
+	      and cust_code = #{custCode}
+      
+    </select>
+    <select id="custDeleteCheck_Sal" parameterType="kr.co.igns.framework.comm.model.AccountVO" 
+    								resultType="kr.co.igns.framework.comm.model.AccountVO">
+	    select * from sal0010
+	    where com_code = #{comCode}
+	      and cust_code = #{custCode}
+      
+    </select>
+    <select id="custDeleteCheck_Mat" parameterType="kr.co.igns.framework.comm.model.AccountVO" 
+    								resultType="kr.co.igns.framework.comm.model.AccountVO">
+	    select * from mat0010
+	    where com_code = #{comCode}
+	      and cust_code = #{custCode}
+    </select>
+    <select id="custDeleteCheck_Pro" parameterType="kr.co.igns.framework.comm.model.AccountVO" 
+    								resultType="kr.co.igns.framework.comm.model.AccountVO">
+	    select * from pro0026
+	    where com_code = #{comCode}
+	      and cust_code = #{custCode}
+    </select>
+</mapper>

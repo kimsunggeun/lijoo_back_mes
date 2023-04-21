@@ -1,0 +1,787 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.baseInfo.bas0215.dao.postgre.Bas0215Dao">
+
+    <!-- 품목선택 GET -->
+    <select id="getItemSelect" parameterType="kr.co.igns.business.baseInfo.bas0210.model.Bas0210Dto" resultType="kr.co.igns.business.baseInfo.bas0210.model.Bas0040VO">        
+        SELECT row_number() over() as id,
+	 		   A.com_code ,
+	 		   A.item_type,
+	 		   A.part_type,	   
+	 		   A.part_no ,
+	           A.part_name ,        
+	           A.spec ,
+	           A.unit ,
+	           A.lot_size,
+	           B.SYS_NAME
+	      FROM BAS0040 A
+	      INNER JOIN BAS0011 B
+	      ON A.PART_TYPE = B.SYS_CODE
+	     WHERE 1=1	     
+	     <if test='facCode != null and !facCode.equals("")'>
+	       AND A.com_code  = #{facCode}
+	     </if>
+	     <if test='itemType != null and !itemType.equals("")'>
+	       AND A.item_type  = #{itemType}
+	     </if>
+	     <if test='partType != null and !partType.equals("")'>
+	       AND A.part_type  = #{partType}
+	     </if>
+	     <if test='userFlag != null and !userFlag.equals("")'>
+	       AND A.user_flag  = #{userFlag}
+	     </if>
+	       AND B.CODE = 'PART_TYPE'
+    </select>
+     
+    <!-- 품목정보 GET -->
+    <select id="getItemInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0040VO">        
+        SELECT row_number() over() as id,
+               com_code,
+               part_no,
+               part_name,
+               spec,
+        	   item_type,
+        	   part_type,
+        	   unit,
+        	   in_wh,
+        	   out_wh,
+        	   lot_size,
+        	   safe_cnt,
+        	   in_insp,
+        	   pro_insp,
+        	   rot_insp,
+        	   out_insp,
+        	   last_insp,
+        	   sup_insp,
+        	   lead_time,
+        	   weight_yn,
+        	   weight,
+        	   user_def1,
+        	   user_def2,
+        	   user_def3,
+        	   user_flag,
+        	   TO_CHAR(make_date,'YYYY-MM-DD') AS makeDate,
+        	   maker,
+        	   TO_CHAR(edit_date,'YYYY-MM-DD') AS EditDate,	
+        	   editor,
+        	   remark  
+     	  FROM bas0040 
+         WHERE com_code = #{comCode}
+           AND part_no  = #{partNo}
+    </select>
+    
+    <!-- 경로유형 GET -->
+    <select id="getPathType" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0041VO">        
+        SELECT row_number() over() as id,
+        	   com_code,
+		       part_no,
+		       path_type,		       
+		       path_code,		       
+		       in_whcode,		       
+		       sort_flag,
+		       remark,
+		       user_flag,		       
+		       TO_CHAR(make_date,'YYYY-MM-DD') AS makeDate,
+		       maker,
+		       TO_CHAR(edit_date,'YYYY-MM-DD') AS EditDate,		       
+		       editor
+     	  FROM bas0041 
+         WHERE com_code = #{comCode}
+           AND part_no  = #{partNo}
+           AND fac_code = 'FAC01'
+      ORDER BY sort_flag
+    </select>
+    
+    <!-- 경로정보 GET -->
+    <select id="getRouteInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0042VO">        
+        SELECT row_number() over() as id,
+               com_code,
+		       part_no,
+		       path_type,
+		       path_code,
+		       path_no,
+		       pro_code,
+		       mat_cost,
+		       pro_cost,
+		       lab_cost,
+		       remark,
+		       user_flag,
+		       TO_CHAR(make_date,'YYYY-MM-DD') AS makeDate,
+		       maker,
+		       TO_CHAR(edit_date,'YYYY-MM-DD') AS EditDate,	
+		       editor				               
+     	  FROM bas0042 
+         WHERE fac_code = #{facCode}
+           AND part_no   = #{partNo}
+           AND path_type = #{pathType}
+           AND path_code = #{pathCode}
+      ORDER BY path_no
+    </select>
+    
+    <!-- BOM정보 GET -->
+    <select id="getBomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0043VO">        
+        SELECT row_number() over(order by pro_no asc, level asc, disp_no asc) as id,
+        	   com_code as comCode,
+        	   fac_code as facCode,
+        	   pa_part_no as paPartNo,
+        	   path_type as pathType,
+        	   path_code as pathCode,
+        	   pro_no as proNo,
+        	   pro_code as proCode,
+        	   level as level,
+        	   disp_no as dispNo,
+        	   part_no as partNo,
+        	   amount as amount,
+        	   remark as remark,
+        	   user_flag as userFlag,
+        	   TO_CHAR(make_date,'YYYY-MM-DD') AS makeDate,
+		       maker as maker,
+		       TO_CHAR(edit_date,'YYYY-MM-DD') AS EditDate,		       
+		       editor as editor
+     	  FROM bas0043
+         WHERE com_code		= #{comCode}
+           AND fac_code		= #{facCode}
+           AND pa_part_no 	= #{partNo}
+           AND path_type 	= #{pathType}
+           AND path_code 	= #{pathCode}
+      ORDER BY pro_no asc, level asc, disp_no asc
+    </select>
+    
+    <!-- 품목별거래처정보 GET -->
+    <select id="getItemCustomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0044VO">        
+        SELECT row_number() over() as id,
+ 			   A.com_code ,
+ 			   A.part_no ,
+ 			   A.cust_code , 			   
+ 			   B.cust_type ,
+ 			   B.mat_type ,
+ 			   B.name , 			    			   
+ 			   A.user_flag , 			   
+			   TO_CHAR(A.make_date,'YYYY-MM-DD') AS makeDate,
+		       A.maker,
+		       TO_CHAR(A.edit_date,'YYYY-MM-DD') AS EditDate,		       
+		       A.editor
+     	  FROM bas0044 A, bas0023 B
+         where A.com_code = B.com_code
+           AND A.cust_code = B.cust_code
+           AND A.com_code = #{comCode} 
+           AND part_no  = #{partNo}
+    </select>
+    
+    <!-- 단가정보 GET -->
+    <select id="getPriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0045VO">        
+        SELECT row_number() over() as id, 
+        	   com_code ,
+			   part_no ,			   
+			   cust_code ,			   
+			   app_start_date ,
+			   app_end_date ,
+			   modi_yn ,
+			   app_yn ,
+			   price ,
+			   unit ,
+			   user_flag ,
+			   TO_CHAR(make_date,'YYYY-MM-DD') AS makeDate,
+		       maker,
+		       TO_CHAR(edit_date,'YYYY-MM-DD') AS EditDate,		       
+		       editor ,
+		       remark
+     	  FROM bas0045 A 
+         WHERE com_code  = #{comCode}
+           AND part_no   = #{partNo}
+           AND cust_code = #{custCode}
+      ORDER BY app_start_date desc
+    </select>
+    
+    <!-- 품목정보 Create -->
+    <insert id="ctItemInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0040VO">
+    	INSERT INTO bas0040
+		(
+			  com_code
+			, part_no
+			, part_name
+			, spec		
+			, item_type	
+			, part_type	
+			, unit
+			, in_wh
+			, out_wh
+			, lot_size
+			, safe_cnt
+			, in_insp
+			, pro_insp
+			, rot_insp
+			, out_insp
+			, last_insp
+			, sup_insp
+			, lead_time
+			, weight_yn
+			, weight
+			, user_def1
+			, user_def2
+			, user_def3		
+			, remark		
+			, user_flag		
+			, make_date		
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}  
+			, #{partNo}   
+			, #{partName} 
+			, #{spec}					
+			, #{itemType}			
+			, #{partType}	
+			, #{unit}      
+			, #{inWh}     
+			, #{outWh}    
+			, #{lotSize}  
+			, #{safeCnt}  
+			, #{inInsp}   
+			, #{proInsp}  
+			, #{rotInsp}  
+			, #{outInsp}  
+			, #{lastInsp} 
+			, #{supInsp}  
+			, #{leadTime} 
+			, #{weightYn} 
+			, #{weight}    
+			, #{userDef1} 
+			, #{userDef2} 
+			, #{userDef3}	
+			, #{remark}	
+			, #{userFlag}	
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 경로 유형 정보 Create -->
+    <insert id="ctPathType" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0041VO">
+    	INSERT INTO bas0041
+		(
+			  com_code
+			, part_no
+			, path_type			
+			, path_code			
+			, in_whcode			
+			, sort_flag
+			, user_flag
+			, remark
+			, make_date
+			, maker
+			, fac_code						
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{partNo}
+			, #{pathType}		
+			, #{pathCode}			
+			, #{inWhcode}			
+			, #{sortFlag}
+			, #{userFlag}
+			, #{remark}
+			, now()
+			, #{maker}
+			, 'FAC01'
+		)
+    </insert>
+    
+    <!-- 경로정보 상세 Create -->
+    <insert id="ctPathInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0042VO">
+    	INSERT INTO bas0042 
+		(
+			com_code
+		  , part_no
+		  , path_type 
+		  , path_code
+		  , path_no
+		  , pro_code
+		  , user_flag
+		  , make_date
+		  , maker
+		  , fac_code
+		)
+		SELECT com_code , 
+		       #{partNo} ,
+		       #{pathType} ,
+		       #{pathCode} ,
+		       proc_no ,
+		       pro_code ,
+		       'Y',
+		       now() ,
+		       #{maker}
+		       ,'FAC01'
+		  FROM bas0038
+		 WHERE com_code  = #{comCode}
+		   AND path_code = #{pathCode}
+    </insert>
+    
+    <!-- BOM정보 Create -->
+    <insert id="ctBomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0043VO">
+    	INSERT INTO bas0043
+		(
+			  com_code
+			, fac_code
+			, pa_part_no
+			, path_type
+			, path_code
+			, pro_no
+			, pro_code
+			, level
+			, disp_no
+			, part_no
+			, amount
+			, remark
+			, user_flag
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{paPartNo}
+			, #{pathType}
+			, #{pathCode}
+			, #{proNo}
+			, #{proCode}
+			, #{level}
+			, #{dispNo}
+			, #{partNo}
+			, #{amount}
+			, #{remark}
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 품목별 거래처정보 Create -->
+    <insert id="ctItemCustomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0044VO">
+    	INSERT INTO bas0044
+		(
+			  com_code
+			, part_no
+			, cust_code			
+			, user_flag
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{partNo}
+			, #{custCode}			
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 단가정보 Create -->
+    <insert id="ctPriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0045VO">    
+    	INSERT INTO bas0045
+		(
+			  com_code
+			, part_no
+			, cust_code
+			, app_start_date
+			, app_end_date
+			, modi_yn
+			, app_yn
+			, price
+			, unit
+			, remark
+			, user_flag
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{partNo}
+			, #{custCode}
+			, #{appStartDate}
+			, #{appEndDate}
+			, #{modiYn}
+			, #{appYn}
+			, #{price}
+			, #{unit}
+			, #{remark}
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 품목정보 Update -->
+    <update id="utItemInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0040VO">
+    	UPDATE bas0040
+		   SET part_name = #{partName}
+			 , spec      = #{spec}
+			 , item_type = #{itemType}
+			 , part_type = #{partType}
+			 , unit      = #{unit}
+			 , in_wh     = #{inWh}
+			 , out_wh    = #{outWh}
+			 , lot_size  = #{lotSize}
+			 , safe_cnt  = #{safeCnt}
+			 , in_insp   = #{inInsp}
+			 , pro_insp	 = #{proInsp}	 
+			 , rot_insp  = #{rotInsp}
+			 , out_insp  = #{outInsp}
+			 , last_insp = #{lastInsp}
+			 , sup_insp  = #{supInsp}
+			 , lead_time = #{leadTime}
+			 , weight_yn = #{weightYn}
+			 , weight    = #{weight}
+			 , user_def1 = #{userDef1}
+			 , user_def2 = #{userDef2}
+			 , user_def3 = #{userDef3}			 
+			 , user_flag = #{userFlag}
+			 , edit_date = now()
+			 , editor    = #{editor}   
+			 , remark    = #{remark}
+		 WHERE com_code = #{comCode}
+		   AND part_no  = #{partNo} 
+    </update>
+    
+    <!-- 경로유형정보 Update -->
+    <update id="utPathType" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0041VO">
+    	UPDATE bas0041
+		   SET in_whcode = #{inWhcode}
+			 , sort_flag = #{sortFlag}
+			 , user_flag = #{userFlag}
+			 , edit_date = now()	 
+			 , editor    = #{editor}   
+			 , remark    = #{remark}  
+		 WHERE com_code  = #{comCode}
+		   AND part_no   = #{partNo} 
+		   AND path_type = #{pathType} 
+		   AND path_code = #{pathCode} 
+    </update>
+    
+    <!-- 경로정보 Update -->
+    <update id="utRouteInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0042VO">
+    	UPDATE bas0042
+		   SET mat_cost  = #{matCost} 
+			 , pro_cost  = #{proCost} 
+			 , lab_cost  = #{labCost} 
+			 , remark    = #{remark}   
+			 , user_flag = #{userFlag}
+			 , edit_date = now()
+			 , editor    = #{editor}   
+		 WHERE com_code  = #{comCode}
+		   AND part_no   = #{partNo} 
+		   AND path_type = #{pathType} 
+		   AND path_code = #{pathCode} 
+		   AND path_no   = #{pathNo} 
+		   AND pro_code  = #{proCode} 
+    </update>
+    
+    <!-- BOM정보 Update -->
+    <update id="utBomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0043VO">
+    	UPDATE bas0043
+		   SET level		= #{level}
+		     , disp_no		= #{dispNo}
+		   	 , amount		= #{amount}       
+			 , remark		= #{remark}
+			 , user_flag	= #{userFlag}
+			 , edit_date	= now() 
+			 , editor		= #{editor}       		 
+		 WHERE com_code		= #{comCode}
+		   AND fac_code		= #{facCode}
+           AND pa_part_no   = #{paPartNo}
+           AND path_type 	= #{pathType}
+           AND path_code 	= #{pathCode}
+           AND pro_code		= #{proCode} 
+		   AND part_no		= #{partNo}  
+    </update>
+    
+    <!-- 품목별거래처정보 Update -->
+    <update id="utItemCustomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0044VO">
+    	UPDATE bas0044
+		   SET user_flag = #{userFlag}
+			 , edit_date = now()
+			 , editor    = #{editor}   
+		 WHERE com_code  = #{comCode} 
+		   AND part_no   = #{partNo}   
+		   AND cust_code = #{custCode} 
+    </update>
+    
+    <!-- 단가정보 Update -->
+    <update id="utPriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0045VO">
+    	UPDATE bas0045
+		   SET modi_yn   = #{modiYn}
+		     , app_yn    = #{appYn}
+		     , price     = #{price}
+		     , unit      = #{unit}			 
+			 , user_flag = #{userFlag}
+			 , edit_date = now()
+			 , editor    = #{editor}
+			 , remark    = #{remark}
+		 WHERE com_code       = #{comCode} 
+		   AND part_no        = #{partNo}   
+		   AND cust_code      = #{custCode} 
+		   AND app_start_date = #{appStartDate} 
+    </update>
+    
+    <!-- 단가정보 날짜 Update -->
+    <update id="utPriceDate" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0045VO">    	
+    	UPDATE bas0045
+		   SET app_end_date   = #{appStartDate}
+		     , app_yn         = 'N'
+		     , user_flag      = 'N'
+		 WHERE com_code       = #{comCode} 
+		   AND part_no        = #{partNo}   
+		   AND cust_code      = #{custCode} 
+		   AND app_end_date   = '9999-12-31' 
+    </update>
+    
+    <!-- 품목정보 Delete -->
+    <delete id="dtItemInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0040VO">
+    	DELETE FROM bas0040
+    	 WHERE com_code = #{comCode}
+    	   AND part_no  = #{partNo}	
+    </delete>
+    
+    <!-- 경로유형 Delete -->
+    <delete id="dtPathType" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0041VO">
+    	DELETE FROM bas0041
+    	 WHERE com_code  = #{comCode}
+    	   AND part_no   = #{partNo}	
+    	   AND path_type = #{pathType}	
+    	   AND path_code = #{pathCode}	
+    </delete>
+    
+    <!-- 경로정보 Delete -->
+    <delete id="dtPathInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0041VO">
+    	DELETE FROM bas0042
+    	 WHERE com_code  = #{comCode}
+    	   AND part_no   = #{partNo}	
+    	   AND path_type = #{pathType}	
+    	   AND path_code = #{pathCode}	
+    </delete>
+    
+    <!-- BOM정보 Delete -->
+    <delete id="dtBomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0043VO">
+    	DELETE FROM bas0043
+    	 WHERE com_code		= #{comCode}
+    	   AND fac_code		= #{facCode}
+    	   AND pa_part_no	= #{paPartNo}
+    	   AND path_type	= #{pathType}
+    	   AND path_code	= #{pathCode}
+    	   AND pro_code		= #{proCode}
+    	   AND part_no		= #{partNo}
+    </delete>
+    
+    <!-- 품목별 거래처 정보 Delete -->
+    <delete id="dtItemCustomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0044VO">
+    	DELETE FROM bas0044
+    	 WHERE com_code  = #{comCode}
+    	   AND part_no   = #{partNo}	
+    	   AND cust_code = #{custCode}
+    </delete>
+    
+    <!-- 단가 정보 Delete -->
+    <delete id="dtPriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0045VO">
+    	DELETE FROM bas0045
+    	 WHERE com_code       = #{comCode}
+    	   AND part_no        = #{partNo}	
+    	   AND cust_code      = #{custCode}
+    	   AND app_start_date = #{appStartDate}
+    </delete>
+    
+    <!-- 품목정보 중복 체크 -->
+    <select id="dupleItemCode" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0040VO" resultType="Integer">        
+        SELECT COUNT(*)
+     	  FROM bas0040
+         WHERE com_code = #{comCode}
+           AND part_no  = #{partNo}
+    </select>
+    
+    <!-- 경로유형 중복 체크 -->
+    <select id="duplePathCode" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0041VO" resultType="Integer">        
+        SELECT COUNT(*)
+     	  FROM bas0041
+         WHERE com_code  = #{comCode}
+           AND part_no   = #{partNo}
+           AND path_type = #{pathType}
+           AND path_code = #{pathCode}
+    </select>
+    
+    <!-- BOM 중복 체크 -->
+    <select id="dupleBomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0043VO" resultType="Integer">        
+        SELECT COUNT(*)
+     	  FROM bas0043
+    	 WHERE com_code		= #{comCode}
+    	   AND fac_code		= #{facCode}
+    	   AND pa_part_no	= #{paPartNo}
+    	   AND path_type	= #{pathType}
+    	   AND path_code	= #{pathCode}
+    	   AND pro_code		= #{proCode}
+    	   AND part_no		= #{partNo}
+    </select>
+    
+    <!-- 품목별거래처정보 중복 체크 -->
+    <select id="dupleItemCustomInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0044VO" resultType="Integer">        
+        SELECT COUNT(*)
+     	  FROM bas0044
+         WHERE com_code  = #{comCode}
+           AND part_no   = #{partNo}
+           AND cust_code = #{custCode}           
+    </select>
+    
+    <!-- 단가정보 중복 체크 -->
+    <select id="duplePriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0045VO" resultType="Integer">        
+        SELECT COUNT(*)
+     	  FROM bas0045
+         WHERE com_code       = #{comCode}
+           AND part_no        = #{partNo}
+           AND cust_code      = #{custCode}
+           AND app_start_date = #{appStartDate}           
+    </select>
+    
+    <!-- 경로명 GET -->
+    <select id="getPathCode" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215VO">        
+        SELECT path_code ,
+          	   path_name 
+     	  FROM bas0037 
+         WHERE com_code = #{comCode}
+    </select>
+    
+    <!-- 창고명 GET -->
+    <select id="getInWhcode" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215VO">        
+        SELECT loc_code AS inWhcode,
+               loc_name AS inWhname
+          FROM bas0033
+         WHERE com_code = #{comCode}
+    </select>
+    
+    <!-- 거래처명 GET -->
+    <select id="getCustCode" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215VO">        
+        SELECT cust_code ,
+			   cust_name 
+     	  FROM bas0023 
+         WHERE com_code = #{comCode}
+      ORDER BY cust_code 
+    </select>
+    
+    <!-- 공정명 GET -->
+    <select id="getProCode" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215VO">        
+        SELECT pro_code,
+               pro_name 		   
+	      FROM bas0031
+         WHERE com_code = #{comCode}
+    </select>
+    
+    <!-- 품번 사용 체크 -->
+    <select id="getPartChk" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0040VO" resultType="Integer">        
+        SELECT A + B + C + D AS Cnt 
+		  FROM (
+		  	SELECT count(*) AS A  
+			  FROM bas0041
+			 WHERE com_code = #{comCode}
+			   AND part_no  = #{partNo}
+		  ) A,  
+		  (
+		  	SELECT count(*) AS B  
+			  FROM bas0043
+			 WHERE com_code = #{comCode}
+			   AND part_no  = #{partNo}
+		  ) B,
+		  (
+		  	SELECT count(*) AS C  
+			  FROM bas0044
+			 WHERE com_code = #{comCode}
+			   AND part_no  = #{partNo}
+		  ) C,
+		  (
+		  	SELECT count(*) AS D  
+			  FROM bas0045
+			 WHERE com_code = #{comCode}
+			   AND part_no  = #{partNo}
+		  ) D          
+    </select>
+    
+    <!-- 단가 사용 체크 -->
+    <select id="getPriceChk" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0044VO" resultType="Integer">        
+        SELECT count(*)
+          FROM bas0045
+         WHERE com_code       = #{comCode}
+           AND part_no        = #{partNo}
+           AND cust_code      = #{custCode}          
+    </select>
+    
+    <!-- 단가 정보 Count -->
+    <select id="getPriceCnt" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0045VO" resultType="Integer">        
+        SELECT count(*)
+          FROM bas0045
+         WHERE com_code  = #{comCode}
+           AND part_no   = #{partNo}
+           AND cust_code = #{custCode}         
+    </select>
+    
+    <!-- 평균단가 가져오기 -->
+    <select id="getAveragePrice" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="Integer">        
+        SELECT AVG(CAST(price as INTEGER))
+          FROM bas0045
+         WHERE com_code  = #{comCode}
+           AND part_no   = #{partNo}
+           AND app_yn	 = 'Y'     
+    </select>    
+    
+    <!-- 품목선택 GET -->
+    <select id="getCustPop" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215VO">        
+        SELECT row_number() over() as id,
+	 		   com_code ,	 		   
+	 		   cust_code ,
+               cust_name ,
+               cust_type ,
+               fn_comcodenm(#{comCode},'BIZ_GROUP',cust_type) AS custTypeNm ,
+               mat_type ,
+               fn_comcodenm(#{comCode},'BIZ_TYPE',mat_type) AS matTypeNm ,
+               cust_no ,
+               name ,
+               con_type ,
+               sec_type 
+	      FROM bas0023
+	     WHERE 1=1	     
+	     <if test='comCode != null and !comCode.equals("")'>
+	       AND com_code  = #{comCode}
+	     </if>
+	     <if test='custCode != null and !custCode.equals("")'>
+	       AND cust_code  = #{custCode}
+	     </if>
+	     <if test='custType != null and !custType.equals("")'>
+	       AND cust_type  = #{custType}
+	     </if>
+	     <if test='matType != null and !matType.equals("")'>
+	       AND mat_type  = #{matType}
+	     </if>
+    </select>
+    
+    <!-- 공장명 GET -->
+    <select id="getFacCode" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215VO">        
+        SELECT fac_name,
+               fac_code
+	      FROM bas0030
+         WHERE com_code = #{comCode}
+    </select>
+
+    <!-- 경로코드에 맞는 공정코드명 GET -->
+    <select id="getProCodeNameWithPathCode" parameterType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215Dto" resultType="kr.co.igns.business.baseInfo.bas0215.model.Bas0215VO">        
+        SELECT b.pro_code,
+               b.pro_name
+	      FROM bas0038 a
+	 LEFT JOIN bas0031 b on a.com_code = b.com_code and a.fac_code = b.fac_code and a.pro_code = b.pro_code
+         WHERE a.com_code = #{comCode}
+           AND a.fac_code = #{facCode}
+           AND a.path_code = #{pathCode} 
+    </select>    
+    
+</mapper>

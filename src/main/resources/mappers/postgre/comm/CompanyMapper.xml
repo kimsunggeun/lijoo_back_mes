@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.CompanyDao">
+        
+    <!-- 회사코드 검색 조건   -->    
+    <sql id="search">
+		<if test='comCode != null and !comCode.equals("")'>
+			and a.com_code like '%' || #{comCode} || '%'
+		</if>
+	</sql>
+	
+	<!-- 회사코드 조회   -->
+    <select id="getCompany" parameterType="kr.co.igns.framework.comm.model.CompanyReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.CompanyVO">
+		select (row_number() over()) as id
+			 , a.com_code
+			 , a.com_name
+			 , a.cor_number
+			 , a.com_number
+			 , a.name
+			 , a.post_no
+			 , a.addr
+			 , a.tel
+			 , a.fax
+			 , a.make_date
+			 , fn_username(a.com_code, a.maker) as maker
+			 , a.edit_date
+			 , fn_username(a.com_code, a.editor) as editor
+			 , a.img_ci			 
+		from bas0020 a
+        where 1=1
+        	<include refid="search" />
+    </select>
+
+	<!-- 거래처 정보 조회 -->    
+    <select id="getComCustomer" parameterType="kr.co.igns.framework.comm.model.ComCustomerReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.ComCustomerVO">
+		select (row_number() over()) as id
+				, a.*
+		from bas0023 a
+        where 1=1
+          and a.cust_code like '%' || #{custCode} || '%'
+        	<include refid="search" />
+    </select>
+    
+	
+	<!-- 공장코드 조회   -->
+    <select id="getFacCode" parameterType="kr.co.igns.framework.comm.model.CompanyReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.CompanyVO">
+		select * from bas0030
+		 where com_code = #{comCode}
+    </select>
+    
+    <update id="updateCompany" parameterType="kr.co.igns.framework.comm.model.CompanyReqDto">
+    	update bas0020
+			set com_name		= #{comName}
+				, cor_number	= #{corNumber}
+				, com_number	= #{comNumber}
+				, name			= #{name}
+				, post_no		= #{postNo}
+				, addr			= #{addr}
+				, tel			= #{tel}
+				, fax			= #{fax}
+				, img_ci		= #{imgCi}
+				, edit_date		= now()
+				, editor		= #{editor}
+			where com_code = #{comCode}
+    </update>
+</mapper>

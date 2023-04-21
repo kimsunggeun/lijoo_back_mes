@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0120Dao">
+
+	<!-- 재고실사 현황 마스터 조회 -->
+    <select id="getMat0120" parameterType="kr.co.igns.business.mat.model.mat0120.Mat0120ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0120.Mat0120VO">
+    	select	row_number() over(order by a.com_code asc, a.fac_code asc, a.loc_code asc, a.part_no asc) as id,
+    		 	a.com_code as comCode,
+    		 	a.fac_code as facCode,			
+    			a.loc_code as locCode,
+    			b.loc_name as locName,
+    			fn_comcodenm(a.com_code, 'ITEM_TYPE', c.item_type) as itemType,
+    			fn_comcodenm(a.com_code, 'PART_TYPE', c.part_type) as part_type,
+    			a.part_no as partNo,
+				a.regi_date as regiDate	
+    	from
+		(
+			select	distinct on (a.part_no) *
+			from	mat0017 as a
+			where	1=1	
+				<if test='startDate != null and !startDate.equals("") and endDate != null and !endDate.equals("")'>
+					and a.regi_date between #{startDate} and #{endDate}
+				</if>
+		)		as a 	  	 	
+		join	bas0033 as b on a.com_code = b.com_code and a.fac_code = b.fac_code and a.loc_code = b.loc_code
+		join	bas0040 as c on a.com_code = c.com_code and a.part_no = c.part_no    	
+    	where	1=1
+			<if test='comCode != null and !comCode.equals("")'>
+				and a.com_code = #{comCode}
+			</if>
+			<if test='facCode != null and !facCode.equals("")'>
+		  		and	a.fac_code = #{facCode}
+		  	</if>
+		  	<if test='locCode != null and !locCode.equals("")'>
+		  		and	a.loc_code = #{locCode}
+		  	</if>		  	
+		  	<if test='itemType != null and !itemType.equals("")'>
+		  		and	c.item_type = #{itemType}
+		  	</if>
+		  	<if test='partType != null and !partType.equals("")'>
+		  		and	c.part_type = #{partType}
+		  	</if>		  		  	
+		  	<if test='partNo != null and !partNo.equals("")'>
+		  		and	a.part_no = #{partNo}
+		  	</if>    		 			
+    	order by a.com_code asc, a.fac_code asc, a.loc_code asc, a.part_no asc			
+    </select>					
+
+	<!-- 재고실사 현황 상세 조회 -->
+    <select id="getMat0120Detail" parameterType="kr.co.igns.business.mat.model.mat0120.Mat0120ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0120.Mat0120VO">
+    	select	row_number() over(order by a.lot_no asc, a.lot_detail asc, a.regi_date asc, a.regi_no asc) as id,
+    		 	a.lot_no as lotNo,
+    		 	a.lot_detail as lotDetail,
+    		 	a.regi_date as regiDate,
+    		 	a.regi_no as regiNo,			
+				a.stock_qty as stockQty,
+				a.real_qty as realQty,
+				fn_comcodenm(a.com_code, 'INVEN_CNT_REGI_TYPE', a.regi_type) as regiType,
+				a.remark as remark,
+				to_char(a.edit_date, 'YYYY-MM-DD') as editDate,
+				a.editor as editor
+    	from	mat0017 as a	
+    	where	1=1
+			<if test='comCode != null and !comCode.equals("")'>
+				and a.com_code = #{comCode}
+			</if>
+			<if test='facCode != null and !facCode.equals("")'>
+		  		and	a.fac_code = #{facCode}
+		  	</if>
+		  	<if test='locCode != null and !locCode.equals("")'>
+		  		and	a.loc_code = #{locCode}
+		  	</if>	  		  	
+		  	<if test='partNo != null and !partNo.equals("")'>
+		  		and	a.part_no = #{partNo}
+		  	</if>
+			<if test='startDate != null and !startDate.equals("") and endDate != null and !endDate.equals("")'>
+				and a.regi_date between #{startDate} and #{endDate}
+			</if>   		 			
+    	order by a.lot_no asc, a.lot_detail asc, a.regi_date asc, a.regi_no asc		
+    </select>
+    
+</mapper>

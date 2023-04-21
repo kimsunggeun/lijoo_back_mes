@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.out.dao.postgre.Out0030Dao">
+   
+	<!-- 공정외주 정보상세 조회 -->
+    <select id="getPro0026" parameterType="kr.co.igns.business.out.model.out0030.Out0030ReqDto" resultType="kr.co.igns.business.out.model.out0030.Out0030VO">
+		select * from pro0026 a
+		join bas0040 b on a.com_code = b.com_code and a.part_no = b.part_no 
+		join bas0045 c on a.com_code = c.com_code and a.part_no = c.part_no and a.cust_code = c.cust_code and c.app_yn = 'Y'
+		where a.com_code = #{comCode}
+		<if test='custCode != null and !custCode.equals("")'>
+		  and a.cust_code = #{custCode}	  
+		</if>	
+		<if test='partNo != null and !partNo.equals("")'>
+		  and a.part_no LIKE CONCAT('%', #{partNo}, '%')	  
+		</if>
+		 and a.out_date BETWEEN #{startDate} AND #{endDate}
+    </select>  
+    
+    <!-- 공정외주 납품등록 조회 -->
+    <select id="getOut0011" parameterType="kr.co.igns.business.out.model.out0030.Out0030ReqDto" resultType="kr.co.igns.business.out.model.out0030.Out0030VO">
+		select * from out0011
+		where com_code  = #{comCode}
+		  and fac_code  = #{facCode}
+		  and ilno 	    = #{ilno}
+		  and work_no   = #{workNo}
+		  and lot_detail = #{lotDetail}
+		  
+    </select>  
+    
+    <!-- 일련번호 생성 -->
+    <select id="getIlno" parameterType="kr.co.igns.business.out.model.out0030.Out0030ReqDto" resultType="String">
+		select 'OP' || right(replace(#{inDate}, '-', ''), 6) || lpad(coalesce((right(max(in_ilno), 4)::integer + 1)::text, '0001'), 4, '0')
+		from out0011
+		where com_code = #{comCode}
+		and fac_code = #{facCode}
+		and in_date = #{inDate}
+    </select>  
+    
+	<insert id="createOut0011" parameterType="kr.co.igns.business.out.model.out0030.Out0030VO">
+		insert into out0011
+		(
+			 com_code
+		   , fac_code
+		   , ilno 
+		   , work_no 
+		   , lot_detail 
+		   , cust_code
+		   , in_date 
+		   , in_ilno 
+		   , in_no 
+		   , next_proc_no 
+		   , lot_no 
+		   , out_lot_detail 
+		   , pro_type 
+		   , part_no 
+		   , qty 
+		   , in_price 
+		   , in_amount 
+		   , out_insp_code 
+		   , remark 
+		   , print_type 
+		   , user_flag 
+		   , make_date 
+		   , maker 
+		)
+		values
+		(
+		    #{comCode}
+		  , #{facCode}
+		  , #{ilno}
+		  , #{workNo}
+		  , #{lotDetail}
+		  , #{custCode}
+		  , #{inDate}
+		  , #{inIlno}
+		  , #{inNo}
+		  , #{nextProcNo}
+		  , (to_char(now(), 'YYMMDD'))
+		  , (
+				select case when subString(MAX(out_lot_detail),4,6) != (to_char(now(), 'YYMMDD'))
+					    	then 
+					    		'INO' || (to_char(now(), 'YYMMDD')) || '0001'
+					    	when
+					    		MAX(out_lot_detail) is null
+					    	then 
+					    		'INO' || (to_char(now(), 'YYMMDD')) || '0001'
+					    	else
+					    	'INO' || (to_char(now(), 'YYMMDD')) || lpad(((substr(max(out_lot_detail), 10))::integer + 1)::text, 4, '0')
+					    	end
+						  from out0011
+						 where com_code = #{comCode}
+						   and fac_code = #{facCode} 
+		  	)
+		  , #{proType}
+		  , #{partNo}
+		  , #{qty}
+		  , #{inPrice}
+		  , #{inAmount}
+		  , #{outInspCode}
+		  , #{remark}
+		  , #{printType}
+		  , #{userFlag}
+		  , now()
+		  , #{maker}
+		)
+    </insert>
+    
+    <update id="updatePro0026" parameterType="kr.co.igns.business.out.model.out0030.Out0030VO">
+		update pro0026
+		   set out_non_deli_qty = (out_non_deli_qty::integer - #{inQty}::integer)::text
+		   	 , out_wait_deli_qty = (out_wait_deli_qty::integer + #{inQty}::integer)::text
+			 , edit_date	= now()
+			 , editor		= #{maker}
+		 where com_code   = #{comCode}
+		   and fac_code   = #{facCode}
+		   and ilno 	  = #{ilno}
+		   and work_no    = #{workNo}
+		   and lot_detail = #{lotDetail}
+		   
+    </update>
+    
+    <delete id="deleteOut0011" parameterType="kr.co.igns.business.out.model.out0030.Out0030DelDto">
+	   	delete from out0011
+	   	where com_code  = #{comCode}
+	  	  and fac_code  = #{facCode} 
+		  and in_ilno   = #{inIlno}
+    </delete>
+    
+    <update id="updatePro0026_2" parameterType="kr.co.igns.business.out.model.out0030.Out0030DelDto">
+		update pro0026
+		   set out_non_deli_qty = (out_non_deli_qty::integer + #{inQty}::integer)::text
+		   	 , out_wait_deli_qty = (out_wait_deli_qty::integer - #{inQty}::integer)::text
+			 , edit_date	= now()
+			 , editor		= #{maker}
+		 where com_code   = #{comCode}
+		   and fac_code   = #{facCode}
+		   and ilno 	  = #{ilno}
+		   and work_no    = #{workNo}
+		   and lot_detail = #{lotDetail}
+		   
+    </update>
+    
+    <!-- 일련번호 생성 -->
+    <select id="getSumQty" parameterType="kr.co.igns.business.out.model.out0030.Out0030DelDto" resultType="String">
+		select (sum(qty::integer))::text from out0011
+		where com_code = #{comCode}
+		  and fac_code = #{facCode}
+		  and in_ilno  = #{inIlno}
+    </select>  
+</mapper>

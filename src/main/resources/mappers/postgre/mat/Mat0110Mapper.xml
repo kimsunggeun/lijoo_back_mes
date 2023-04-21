@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0110Dao">
+        
+	<!-- 재고실사 조회 -->
+    <select id="getMat0110" parameterType="kr.co.igns.business.mat.model.mat0110.Mat0110ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0110.Mat0110VO">
+        select	row_number() over(order by a.com_code asc, a.fac_code asc, a.loc_code asc, a.part_no asc, a.lot_no asc, a.lot_detail asc) as id,
+         		a.com_code as comCode,
+         		a.fac_code as facCode,
+         		a.loc_code as locCode,
+         		b.loc_name as locName,
+         		fn_comcodenm(a.com_code, 'ITEM_TYPE', c.item_type) as itemType,
+         		fn_comcodenm(a.com_code, 'PART_TYPE', c.part_type) as part_type,
+         		a.part_no as partNo,
+         		c.part_name as partName,
+         		a.lot_no as lotNo,
+         		a.lot_detail as lotDetail,
+         		to_char(now(), 'YYYY-MM-DD') as regiDate,
+			    (	select	max(b.regi_no) as regiNo			
+			    	from	mat0017 as b
+			    	where	1=1
+			    			and	b.com_code = a.com_code
+					  		and	b.fac_code = a.fac_code
+					  		and b.part_no = a.part_no
+					  		and b.lot_detail = a.lot_detail
+					  		and b.regi_date = to_char(now(), 'YYYY-MM-DD')
+					group by	b.lot_detail
+         		)	as regiNo,
+         		a.stock_qty as stockQty,
+         		a.stock_qty as realQty,
+         		null as realState,
+         		null as stockType,
+         		null as regiType,
+         		null as printType,
+         		a.user_flag as userFlag,
+         		null as remark,
+         		null as makeDate,
+         		null as maker,
+         		null as editDate,
+         		null as editor
+		from			mat0021 as a
+		join			bas0033 as b on a.com_code = b.com_code and a.fac_code = b.fac_code and a.loc_code = b.loc_code
+		join			bas0040 as c on a.com_code = c.com_code and a.part_no = c.part_no	
+		where	1=1
+			<if test='comCode != null and !comCode.equals("")'>
+				and a.com_code = #{comCode}
+			</if>
+			<if test='facCode != null and !facCode.equals("")'>
+		  		and	a.fac_code = #{facCode}
+		  	</if>
+		  	<if test='locCode != null and !locCode.equals("")'>
+		  		and	a.loc_code = #{locCode}
+		  	</if>		  	
+		  	<if test='itemType != null and !itemType.equals("")'>
+		  		and	c.item_type = #{itemType}
+		  	</if>
+		  	<if test='partType != null and !partType.equals("")'>
+		  		and	c.part_type = #{partType}
+		  	</if>		  		  	
+		  	<if test='partNo != null and !partNo.equals("")'>
+		  		and	a.part_no = #{partNo}
+		  	</if>
+		order by a.com_code asc, a.fac_code asc, a.loc_code asc, a.part_no asc, a.lot_no asc, a.lot_detail asc
+    </select>
+    
+    <!-- 재고실사 입력 -->
+    <insert id="insertMat0110" parameterType="kr.co.igns.business.mat.model.mat0110.Mat0110VO">
+    	insert into mat0017
+    	(
+    		  com_code
+			, fac_code			
+			, part_no
+			, lot_no
+			, lot_detail
+			, regi_date
+			, regi_no
+			, stock_qty
+			, real_qty
+			, real_state
+			, stock_type
+			, loc_code
+			, regi_type			
+			, print_type
+			, user_flag
+			, remark			
+			, make_date
+			, maker
+			, edit_date
+			, editor
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}			
+			, #{partNo}
+			, #{lotNo}
+			, #{lotDetail}
+			, to_char(now(), 'YYYY-MM-DD')
+			, #{regiNo}
+			, #{stockQty}
+			, #{realQty}
+			, #{realState}
+			, #{stockType}
+			, #{locCode}
+			, #{regiType}			
+			, #{printType}
+			, #{userFlag}
+			, #{remark}
+			, now()
+			, #{maker}
+			, now()
+			, #{editor}
+		)
+    </insert>
+    
+    <!-- 재고실사 찾기 : 전산번호 -->
+    <select id="getMat0110FromLotDetail" parameterType="kr.co.igns.business.mat.model.mat0110.Mat0110VO"
+     								resultType="kr.co.igns.business.mat.model.mat0110.Mat0110VO">
+		select	row_number() over(order by a.com_code asc, a.fac_code asc, a.lot_detail asc) as id,
+				a.com_code as comCode,
+				a.fac_code as facCode,
+				a.loc_code as locCode,
+				b.loc_name as locName,
+				a.part_no as partNo,
+				c.part_name as partName,
+				a.lot_no as lotNo,
+				a.lot_detail as lotDetail,
+         		to_char(now(), 'YYYY-MM-DD') as regiDate,
+			    (	select	max(b.regi_no) as regiNo			
+			    	from	mat0017 as b
+			    	where	1=1
+			    			and	b.com_code = a.com_code
+					  		and	b.fac_code = a.fac_code
+					  		and b.part_no = a.part_no
+					  		and b.lot_detail = a.lot_detail
+					  		and b.regi_date = to_char(now(), 'YYYY-MM-DD')
+					group by	b.lot_detail
+         		)	as regiNo,				
+				a.stock_qty as stockQty,
+				a.stock_qty as realQty,
+				null as realState,
+         		null as remark,
+         		null as makeDate,
+         		null as maker,
+         		substring(a.edit_date::varchar,0,20) as editDate,
+         		a.editor
+		from	mat0021 as a
+		join	bas0033 as b on a.com_code = b.com_code and a.fac_code = b.fac_code and a.loc_code = b.loc_code
+		join	bas0040 as c on a.com_code = c.com_code and a.part_no = c.part_no
+		where	1=1
+			<if test='comCode != null and !comCode.equals("")'>
+				and a.com_code = #{comCode}
+			</if>
+			<if test='facCode != null and !facCode.equals("")'>
+		  		and	a.fac_code = #{facCode}
+		  	</if>
+			<if test='lotDetail != null and !lotDetail.equals("")'>
+		  		and	a.lot_detail = #{lotDetail}
+		  	</if>
+		order by a.com_code asc, a.fac_code asc, a.lot_detail asc
+    </select>
+    
+</mapper>

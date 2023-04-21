@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0160Dao">
+	<select id="getPro0160" parameterType="kr.co.igns.business.ProdManage.model.pro0160.Pro0160ReqDto" 
+							resultType="kr.co.igns.business.ProdManage.model.pro0160.Pro0160VO">
+		select 
+			 a.*
+			,a.make_date::varchar(10) as workDate
+			,c.work_name as workCode
+			,d.work_dename as workDecode
+			,e.sys_name as defCode
+			,f.sys_name as proType
+			,g.sys_name as eventCd
+			,h.part_name as partName
+		from pro0026 a
+		inner join pro0021 b on b.ilno = a.ilno
+		inner join bas0034 c on c.work_code = b.work_code
+		inner join bas0035 d on d.work_decode = b.work_decode 
+		left join bas0011 e on a.def_code = e.sys_code and e.code in ('DEF_CODE')
+		inner join bas0011 f on a.pro_type = f.sys_code and f.code in ('PRO_TYPE')
+		join bas0011 g on a.event_cd = g.sys_code and g.code in ('EVENT_CD')
+		left join bas0040 h on a.com_code = h.com_code and a.part_no = h.part_no
+		where a.make_date::varchar(10) between #{startDate} and #{endDate}
+			<if test="comCode != null and comCode != ''">
+				AND a.COM_CODE = #{comCode}
+			</if>
+			<if test="facCode != null and facCode != ''">
+				AND a.FAC_CODE = #{facCode}
+			</if>
+			<if test="proType != null and proType != ''">
+				AND a.pro_type = #{proType}
+			</if>			
+			<if test="workCode != null and workCode != ''">
+				AND b.WORK_CODE = #{workCode}
+			</if>
+			<if test="workDecode != null and workDecode != ''">
+				AND d.WORK_DECODE = #{workDecode}
+			</if>
+			
+			<if test="partNo != null and partNo != ''">
+				AND a.PART_NO like #{partNo}
+			</if>
+			<if test="workNo != null and workNo != ''">
+				AND a.WORK_NO like #{workNo}
+			</if>
+			<if test="defCode != null and defCode != ''">
+				AND a.DEF_CODE like #{defCode}
+			</if>
+		order by a.work_no, c.sort_flag, d.sort_flag, a.make_date, a.lot_detail
+	</select>
+</mapper>

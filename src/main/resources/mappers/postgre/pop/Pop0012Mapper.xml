@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0012Dao">
+	<select id="getPop0012" parameterType="kr.co.igns.business.pop.model.Pop0012VO" resultType="kr.co.igns.business.pop.model.Pop0012VO" >
+		select a.com_code as comCode, a.fac_code as facCode, a.user_id as userId, a.work_decode as workDecode,
+				b.work_code as workCode, b.work_dename as workDename, fn_workname(a.com_code,a.fac_code,b.work_code) as workName 
+		from pro0020 a
+		left join bas0035 b on b.com_code = a.com_code and b.fac_code = a.fac_code and b.work_decode = a.work_decode
+		where a.com_code = #{comCode}
+		and a.fac_code = #{facCode}
+		and a.user_id = #{userId}
+	</select>
+	
+
+</mapper>

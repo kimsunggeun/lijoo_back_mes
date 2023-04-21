@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.DepartmentDao">
+        
+	<!-- 부서코드 중복확인 -->
+	<select id="checkDepartmentCd" parameterType="kr.co.igns.framework.comm.model.DepartmentReqDto" 
+    					resultType="java.lang.Integer">
+        select count(*)
+		from bas0021 a
+		where 1 = 1
+		AND a.com_code = #{comCode}
+	  	AND a.dep_code = #{depCode}
+    </select>
+        
+    <!-- 부서코드 전체 조회 -->
+    <select id="getDepartment" parameterType="kr.co.igns.framework.comm.model.DepartmentReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.DepartmentVO">
+        select a.com_code
+        	 , a.dep_code
+        	 , a.dep_name
+        	 , a.pa_decode
+        	 , a.user_flag
+        	 , a.remark
+        	 , a.make_date
+        	 , fn_username(a.com_code, a.maker) as maker
+        	 , a.edit_date
+        	 , fn_username(a.com_code, a.editor) as editor
+		from bas0021 a
+		where a.com_code = #{comCode}
+    </select>
+    
+    <insert id="createDepartment" parameterType="kr.co.igns.framework.comm.model.DepartmentVO">
+    	insert into bas0021
+			(com_code
+			, dep_code
+			, dep_name
+			, pa_decode
+			, user_flag
+			, remark
+			, make_date
+			, maker
+			)
+		values(
+			#{comCode}
+			, #{depCode}
+			, #{depName}
+			, #{paDecode}
+			, #{userFlag}
+			, #{remark}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <update id="updateDepartment" parameterType="kr.co.igns.framework.comm.model.DepartmentVO">
+    	update bas0021
+			set dep_name 		= #{depName}
+				, pa_decode		= #{paDecode}
+				, user_flag		= #{userFlag}
+				, remark		= #{remark}
+				, edit_date		= now()
+				, editor		= #{editor}
+			where com_code = #{comCode}
+			  and dep_code = #{depCode} 
+    </update>
+    
+    <delete id="deleteDepartment" parameterType="kr.co.igns.framework.comm.model.DepartmentVO">
+    	delete from bas0021 
+    	where com_code = #{comCode}
+	  	  and dep_code = #{depCode} 
+    </delete>
+    
+</mapper>

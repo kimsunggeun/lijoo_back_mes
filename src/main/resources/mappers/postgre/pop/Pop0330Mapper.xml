@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0330Dao">
+
+	<select id="getPop0330" parameterType="kr.co.igns.business.pop.model.Pop0330Dto" 
+							resultType="kr.co.igns.business.pop.model.Pop0330VO" >
+		select *
+		 from pro0026
+		
+		<where>
+			
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND fac_code = #{facCode}					
+				]]>
+			</if>
+		
+			<if test="proCode != null and proCode != ''"> 
+				<![CDATA[
+					AND pro_code =  #{proCode}
+				]]>
+			</if>
+				<if test="workDecode != null and workDecode != ''">
+				<![CDATA[
+					AND work_decode = #{workDecode}
+				]]>
+			</if>
+				<if test="lotDetail != null and lotDetail != ''">
+				<![CDATA[
+					AND lot_detail = #{lotDetail}
+				]]>
+				</if>
+		       <if test="defCode != null and defCode != ''">
+				<![CDATA[
+					AND def_code = #{defCode}
+				]]>
+			 </if>
+			
+		</where>
+	</select>
+	
+	
+	<select id="getPopup0330" parameterType="kr.co.igns.business.pop.model.Pop0330Dto" 
+							resultType="kr.co.igns.business.pop.model.Pop0330PopUpVO" >
+							
+		select * 
+		from mat0021 as a
+		join pro0026 as b on a.lot_detail = b.lot_detail 
+		
+		<where>
+			
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND a.com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND a.fac_code = #{facCode}					
+				]]>
+			</if>
+		
+			<if test="proCode != null and proCode != ''"> 
+				<![CDATA[
+					AND a.pro_code =  #{proCode}
+				]]>
+			</if>
+				<if test="workDecode != null and workDecode != ''">
+				<![CDATA[
+					AND a.work_decode = #{workDecode}
+				]]>
+			</if>
+				<if test="lotDetail != null and lotDetail != ''">
+				<![CDATA[
+					AND b.lot_detail = #{lotDetail}
+				]]>
+				</if>
+		       <if test="defCode != null and defCode != ''">
+				<![CDATA[
+					AND b.def_code = #{defCode}
+				]]>
+			 </if>
+			
+		</where>
+	</select>
+	
+
+</mapper>

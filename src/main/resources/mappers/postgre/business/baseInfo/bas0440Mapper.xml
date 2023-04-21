@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.baseInfo.bas0440.dao.postgre.Bas0440Dao">
+
+    <!-- 부서정보 GET -->
+    <select id="getDepInfo"
+    	parameterType="kr.co.igns.business.baseInfo.bas0440.model.Bas0440DepVO"
+    	resultType="kr.co.igns.business.baseInfo.bas0440.model.Bas0440DepVO">        
+		select dep_code
+		     , dep_name
+		  from bas0021
+		 where com_code = #{comCode}
+		   and user_flag = 'Y'
+    </select>
+    
+    <!-- 계측기 정보 GET -->
+    <select id="getItemInfo"
+    	parameterType="kr.co.igns.business.baseInfo.bas0440.model.Bas0440Dto"
+    	resultType="kr.co.igns.business.baseInfo.bas0440.model.Bas0440VO">        
+		select com_code
+             , fac_code
+             , mea_gr
+             , mea_code
+             , mea_name
+             , mea_spec
+             , mea_grade
+             , mea_state
+             , dep_code
+             , name
+             , ass_no
+             , pro_companny
+             , sup_companny
+             , manu_date
+             , pur_date
+             , corr_yn
+             , corr_agency
+             , corr_month
+             , corr_sdate
+             , corr_edate
+             , corr_std
+             , corr_max
+             , corr_min
+             , model_no
+             , remark
+             , user_flag
+             , make_date
+             , maker
+             , edit_date
+             , editor
+          from bas0082
+         where com_code = #{comCode}
+         <if test="facCode != null and facCode != ''">
+           and fac_code = #{facCode}
+         </if>
+         <if test="meaGr != null and meaGr != ''">
+           and mea_gr = #{meaGr}
+         </if>
+         <if test="meaName != null and meaName != ''">
+           and mea_name like CONCAT('%', #{meaName}, '%')           
+         </if>  
+         <if test="frPurDate != null and frPurDate != '' and toPurDate != null and toPurDate != ''">
+           and pur_date between #{frPurDate} and #{toPurDate}
+         </if>
+    </select>
+    <insert id="createBas0440"
+    	parameterType="kr.co.igns.business.baseInfo.bas0440.model.Bas0440VO">    
+    	insert into bas0082
+    		(  com_code
+             , fac_code
+             , mea_gr
+             , mea_code
+             , mea_name
+             , mea_spec
+             , mea_grade
+             , mea_state
+             , dep_code
+             , name
+             , ass_no
+             , pro_companny
+             , sup_companny
+             , manu_date
+             , pur_date
+             , corr_yn
+             , corr_agency
+             , corr_month
+             , corr_sdate
+             , corr_edate
+             , corr_std
+             , corr_max
+             , corr_min
+             , model_no
+             , remark
+             , user_flag
+             , make_date
+             , maker                 	
+    		)
+    	values
+    		(
+    		   #{comCode}
+             , #{facCode}
+             , #{meaGr}
+             , #{meaCode}
+             , #{meaName}
+             , #{meaSpec}
+             , #{meaGrade}
+             , #{meaState}
+             , #{depCode}
+             , #{name}
+             , #{assNo}
+             , #{proCom}
+             , #{supCom}
+             , #{manuDate}
+             , #{purDate}
+             , #{corrYN}
+             , #{corrAgency}
+             , #{corrMonth}
+             , #{corrsDate}
+             , #{correDate}
+             , #{corrStd}
+             , #{corrMax}
+             , #{corrMin}
+             , #{modelNo}
+             , #{remark}
+             , #{userFlag}
+             , now()
+             , #{maker}
+    		)
+    </insert>
+    
+    <update id="updateBas0440"
+    	parameterType="kr.co.igns.business.baseInfo.bas0440.model.Bas0440VO">
+    	update bas0082
+    	   set mea_gr             = #{meaGr}     
+             , mea_name           = #{meaName}   
+             , mea_spec           = #{meaSpec}   
+             , mea_grade          = #{meaGrade}  
+             , mea_state          = #{meaState}  
+             , dep_code           = #{depCode}   
+             , name               = #{name}      
+             , ass_no             = #{assNo}     
+             , pro_companny       = #{proCom}    
+             , sup_companny       = #{supCom}    
+             , manu_date          = #{manuDate}  
+             , pur_date           = #{purDate}   
+             , corr_yn            = #{corrYN}    
+             , corr_agency        = #{corrAgency}
+             , corr_month         = #{corrMonth} 
+             , corr_sdate         = #{corrsDate} 
+             , corr_edate         = #{correDate} 
+             , corr_std           = #{corrStd}   
+             , corr_max           = #{corrMax}   
+             , corr_min           = #{corrMin}   
+             , model_no           = #{modelNo}   
+             , remark             = #{remark}    
+             , user_flag          = #{userFlag}  
+             , edit_date          = now()        
+             , editor             = #{editor}
+    	 where com_code = #{comCode}     
+    	   and fac_code = #{facCode}
+    	   and mea_code = #{meaCode}
+    </update>
+    
+    <delete id = "deleteBas0440"
+    	parameterType="kr.co.igns.business.baseInfo.bas0440.model.Bas0440VO">
+    	delete
+    	  from bas0082
+    	 where com_code = #{comCode}
+    	   and fac_code = #{facCode}
+    	   and mea_code = #{meaCode}
+    </delete>  
+ 
+</mapper>

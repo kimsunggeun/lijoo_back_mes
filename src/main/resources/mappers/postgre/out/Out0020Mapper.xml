@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.out.dao.postgre.Out0020Dao">
+        
+	<!-- 공정외주발주등록 조회 -->
+    <select id="getOut0020" parameterType="kr.co.igns.business.out.model.out0020.Out0020ReqDto" 
+    						   resultType="kr.co.igns.business.out.model.out0020.Out0020VO">
+      	select row_number() over(order by a.proc_no) as id, a.*
+		  from out0011 a
+	     where a.com_code   = #{comCode}
+	       and a.fac_code   = #{facCode} 
+		   and a.ilno       = #{ilno}
+		   and a.no  	    = #{no}
+		   and a.in_ilno    = #{inIlno}
+		   and a.in_no      = #{inNo}
+		   and a.lot_detail = #{lotDetail}
+    </select>
+    
+    <insert id="createOut0020" parameterType="kr.co.igns.business.out.model.out0020.Out0020VO">
+    	insert into out0011
+			 ( com_code
+			 , fac_code
+			 , ilno
+			 , no
+			 , in_ilno
+			 , in_no
+			 , path_code
+			 , proc_no
+			 , lot_no
+			 , lot_detail
+			 , part_no
+			 , qty
+			 , in_qty
+			 , make_qty
+			 , box_qty
+			 , rem_qty
+			 , in_price
+			 , in_amount
+			 , out_insp_code
+			 , remark
+			 , print_type
+			 , user_flag
+			 , make_date
+			 , maker
+			 )
+	   values( #{comCode}
+			 , #{facCode}
+			 , #{ilno}
+			 , #{no}
+			 , #{inIlno}
+			 , #{inNo}
+			 , #{pathCode}
+			 , #{procNo}
+			 , #{lotNo}
+             , #{lotDetail}
+             , #{partNo}
+             , #{qty}
+             , #{inQty}
+             , #{makeQty}
+             , #{boxQty}
+             , #{remQty}
+             , #{inPrice}
+             , #{inAmount}
+             , #{outInspCode}
+             , #{remark}
+             , #{printType}
+             , #{userFlag}
+             , now()
+             , #{maker}
+             )
+    </insert>
+    
+    <update id="updateOut0020" parameterType="kr.co.igns.business.out.model.out0020.Out0020VO">
+    	update out0011
+		   set path_code   	 = #{pathCode}
+			 , proc_no  	 = #{procNo}
+			 , lot_no  		 = #{lotNo}
+			 , part_no  	 = #{partNo}
+			 , qty  		 = #{qty}
+			 , in_qty  	 	 = #{inQty}
+			 , make_qty  	 = #{makeQty}
+			 , box_qty  	 = #{boxQty}
+			 , rem_qty 	  	 = #{remQty}
+			 , in_price      = #{inPrice}
+			 , in_amount  	 = #{inAmount}
+			 , out_insp_code = #{outInspCode}
+			 , remark  	  	 = #{remark}
+			 , print_type 	 = #{printType}
+			 , user_flag  	 = #{userFlag}
+			 , edit_date  	 = now()
+			 , editor	  	 = #{editor}
+	 	 where com_code   = #{comCode}
+		   and fac_code   = #{facCode} 
+		   and ilno       = #{ilno}
+		   and no  		  = #{no}
+		   and in_ilno    = #{inIlno}
+		   and in_no  	  = #{inNo}
+		   and lot_detail = #{lotDetail}
+    </update>
+    
+</mapper>

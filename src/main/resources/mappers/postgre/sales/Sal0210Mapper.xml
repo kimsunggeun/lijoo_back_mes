@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Sal0210Dao">
+        
+	<!-- 수주진행현황 조회 -->
+    <select id="getSal0210" parameterType="kr.co.igns.business.sales.model.sal0210.Sal0210ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0210.Sal0210VO">
+	select A.fac_code as facCode, A.ord_no as ordNo, a.ord_date as ordDate, A.cust_code as custCode,
+			(select cust_name from bas0023 where cust_code = A.cust_code) as custName,
+			B.deli_date as deliDate, B.no, fn_comcodenm(A.com_code,'ITEM_TYPE', C.item_type) as itemType,
+			fn_comcodenm(A.com_code,'PART_TYPE', C.part_type) as partType, B.part_no as partNo, C.part_name as partName,
+			C.spec as partSpec, fn_comcodenm(A.com_code,'UNIT', C.unit) as partUnit, B.qty, B.out_qty as outQty, 
+			B.now_qty as nowQty, B.plan_qty as planQty, B.price, B.amount, A.ord_state as ordState, B.remark,
+			fn_username(A.com_code, A.maker) as maker, A.make_date, fn_username(A.com_code, A.editor) as editor, A.edit_date
+	from sal0010 A
+	left join sal0011 B on A.com_code = B.com_code and A.fac_code = B.fac_code and A.ord_no = B.ord_no
+	left join bas0040 C on B.com_code = C.com_code and B.part_no = C.part_no
+	where A.com_code = #{comCode}
+	<if test="facCode != null and facCode != ''">
+		and a.fac_code = #{facCode}
+	</if>
+	<if test="custName != null and custName != ''">
+		and a.cust_code in (select fn_custnamesearch(#{comCode},#{custName}))
+	</if>
+	<if test="partName != null and partName != ''">
+		and c.part_name like '%'||#{partName}||'%'
+	</if>
+	<if test="itemType != null and itemType != ''">
+		and c.item_type = #{itemType}
+	</if>
+	<if test="partType != null and partType != ''">
+		and c.part_type = #{partType}
+	</if>
+	<if test="ordNo != null and ordNo != ''">
+		and a.ord_no like '%'||#{ordNo}||'%'
+	</if>
+	<if test="ordState != null and ordState != ''">
+		and a.ord_state = #{ordState}
+	</if>
+	<if test='endDate!= null and !endDate.equals("")'>
+		AND b.deli_date between #{startDate} and #{endDate}
+	</if>	
+	order by ordno, no 
+    </select>
+    
+</mapper>

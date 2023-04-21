@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Sal0160Dao">
+        
+	<!-- 출하계획등록 조회 -->
+    <select id="getSal0120" parameterType="kr.co.igns.business.sales.model.sal0160.Sal0160ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0160.Sal0160VO">
+        select a.*
+		from sal0120 a
+		where 1=1
+		  and a.com_code = #{comCode}
+		  <if test='custCode != null and !custCode.equals("")'>
+		  and a.cust_code = #{custCode}
+		  </if>
+		  <if test='partNo != null and !partNo.equals("")'>
+		  and a.part_no LIKE CONCAT('%', #{partNo}, '%')
+		  </if>
+		  and a.out_date BETWEEN #{startDate} and #{endDate}
+	 order by a.ilno asc, a.no asc
+    </select>
+
+	<!-- 거래명세서 -->
+    <select id="getTransRptHeader" parameterType="java.util.HashMap" resultType="kr.co.igns.business.mat.model.mat0070.TransRptVO">
+	    select	t.com_code
+			  , t.fac_code
+			  , t.ilno
+			  , t.out_date as regi_date
+			  , b.com_name as com_name
+			  , rpad(b.com_number, 12, ' ')	as com_num
+			  , b.name as ceo_name
+			  , b.addr as com_addr
+			  , c.cust_code as cust_code
+			  , c.cust_name as cust_name
+			  , rpad(c.cust_no, 12, ' ') as cust_num
+			  , c.name as cust_ceo_name
+			  , c.addr as cust_addr
+			  , t.amount * 0.1 	as vat
+			  , t.amount * 1.1 	as total
+			  , d.keeper
+		from	(
+			select a.com_code
+				 , a.fac_code
+				 , a.cust_code
+				 , a.ilno
+				 , a.out_date
+				 , sum(a.amount::numeric) as amount
+			from sal0120 a
+			where 1=1
+			and a.com_code = #{comCode}
+			and a.fac_code = #{facCode}
+			and a.ilno = #{ilno} 
+			group by a.com_code, a.fac_code, a.cust_code, a.ilno, a.out_date
+		) t
+		join bas0020 b on t.com_code = b.com_code
+		join bas0023 c on t.com_code = c.com_code and t.cust_code = c.cust_code
+		join (select '(공급자 보관용)' as keeper
+			  union
+			  select '(공급받는자 보관용)' as keeper) d on 1=1
+    </select>
+    
+    <select id="getTransRptSub" parameterType="java.util.HashMap" resultType="kr.co.igns.business.mat.model.mat0070.TransRptSubVO">
+    	select (row_number() over(order by a.no)) AS num
+			  , a.part_no
+			  , b.part_name  
+			  , a.qty
+			  , 1 as box_qty
+			  , a.price as in_price
+			  , a.amount as in_amount
+		from sal0120 a
+		join bas0040 b on a.com_code = b.com_code 
+						and a.part_no = b.part_no  
+		where a.com_code = #{comCode}
+		  and a.fac_code = #{facCode}
+		  and a.ilno = #{ilno}
+		  and a.cust_code = #{custCode}
+    </select>
+</mapper>

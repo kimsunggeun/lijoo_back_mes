@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0020Dao">
+        
+	<!-- 생산계획 조회 -->
+    <select id="getPro0020" parameterType="kr.co.igns.business.ProdManage.model.pro0020.Pro0020ReqDto" 
+    					resultType="kr.co.igns.business.ProdManage.model.pro0020.Pro0020VO">
+		SELECT a.*
+		FROM PRO0011 a
+		<where>
+			<if test="comCode != null and comCode != ''">
+				AND a.COM_CODE = #{comCode}
+			</if>
+			<if test="facCode != null and facCode != ''">
+				AND a.FAC_CODE = #{facCode}
+			</if>
+			<if test="ilno != null and ilno != ''">
+				AND a.ILNO = #{ilno}
+			</if>
+			<if test="partNo != null and partNo != ''">
+				AND PART_NO = #{partNo}
+			</if>
+			<if test="planDate != null and planDate != ''">
+				AND a.PLAN_DATE = #{planDate}
+			</if>
+		</where>
+    </select>
+    
+    <!-- 생산계획 등록 -->
+    <insert id="createPro0020" parameterType="kr.co.igns.business.ProdManage.model.pro0020.Pro0020VO">
+    	INSERT INTO PRO0011
+		(COM_CODE, FAC_CODE, ILNO, PART_NO, REGI_DATE, PLAN_DATE, PLAN_QTY, PRE_PLAN_QTY, WORK_NO, USER_FLAG, MAKE_DATE, MAKER, EDIT_DATE, EDITOR)
+		VALUES(#{comCode}, #{facCode}, #{ilno}, #{partNo}, #{regiDate}, #{planDate}, #{planQty}, #{prePlanQty}, #{workNo}, #{userFlag}, now(), 
+				#{maker}, now(), #{editor});
+    	
+    </insert>
+    <!-- 생산계획 수정 -->
+    <update id="updatePro0020" parameterType="kr.co.igns.business.ProdManage.model.pro0020.Pro0020VO">
+    	UPDATE PRO0011
+			SET regi_date = #{regiDate}, 
+				plan_qty = #{planQty}, 
+				pre_plan_qty = #{prePlanQty}, 
+				work_no = #{workNo}, 
+				user_flag = #{userFlag}, 
+				edit_date = now(), 
+				editor = #{maker}
+		WHERE com_code = #{comCode} 
+		  AND fac_code = #{facCode} 
+		  AND ILNO = #{ilno} 
+		  AND part_no = #{partNo} 
+		  AND plan_date = #{planDate};
+    </update>
+    
+    <!-- 생산계획(기간별) 업로드 가져오기 -->
+    <select id="getUpload" parameterType="kr.co.igns.business.ProdManage.model.pro0020.Pro0020VO" resultType="kr.co.igns.business.ProdManage.model.pro0020.Pro0020VO">
+		SELECT #{id} AS id ,		
+			   #{no} AS no ,
+			   #{comCode} AS comCode ,
+			   #{facCode} AS facCode ,
+			   #{ilno} AS ilno ,
+			   #{partNo} AS partNo ,
+			   (
+			   	SELECT part_name
+			   	  FROM bas0040
+			   	 WHERE com_code = #{comCode}
+			   	   AND part_no  = #{partNo}
+			   ) AS partName ,
+			   #{planDate} AS planDate ,
+			   COALESCE(#{regiDate},TO_CHAR(NOW(),'YYYY-MM-DD')) AS regiDate ,			   
+			   #{planQty} AS planQty ,
+			   #{prePlanQty} AS prePlanQty
+	</select>
+	
+    <!-- 이전 생산계획등록  -->
+    <select id="getPrePlanQty" parameterType="kr.co.igns.business.ProdManage.model.pro0020.Pro0020VO" resultType="String">
+		  select plan_qty  from pro0011
+		  where 1=1
+	        and com_code  = #{comCode}
+		    and fac_code  = #{facCode}
+		    and part_no   = #{partNo}
+		    and plan_date = #{planDate}
+	</select>
+	<!-- 업로드저장하기 -->
+	<insert id="ctUpload" parameterType="kr.co.igns.business.ProdManage.model.pro0020.Pro0020VO">
+    	INSERT INTO pro0011
+		(
+			  com_code
+			, fac_code
+			, part_no
+			, plan_date
+			, regi_date
+			, plan_qty
+			, pre_plan_qty
+			, wo_cnt
+			, make_date
+			, maker						
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode} 	
+			, #{partNo}
+			, #{planDate}
+			, #{regiDate}
+			, #{planQty}
+			, #{prePlanQty}	
+			, '0'		
+			, current_date
+			, #{maker}
+		)
+		ON CONFLICT ON  CONSTRAINT
+			pro0011_uk
+		DO UPDATE SET
+			plan_qty = #{planQty}
+			, pre_plan_qty = #{prePlanQty}
+			, edit_date	   = current_date
+			, editor	   = #{maker}
+    </insert>
+</mapper>

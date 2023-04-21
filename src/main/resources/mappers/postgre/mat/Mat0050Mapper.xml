@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0050Dao">
+
+	<!-- 반품등록화면 입고정보조회 -->
+    <select id="getMat0012" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0012ReqDto"	resultType="kr.co.igns.business.mat.model.mat0050.Mat0012VO">
+ 		select row_number() over(order by a.regi_date desc, a.ilno) as id
+             , a.com_code 	
+			 , a.fac_code 	
+			 , a.regi_date  
+			 , a.ilno 
+			 , a.cust_code 
+			 , fn_custname(a.com_code, a.cust_code) as cust_name
+			 , a.in_type
+			 , fn_comcodenm(a.com_code, 'IN_TYPE', a.in_type) as in_type_name 
+			 , b.part_no 
+			 , b.part_name
+			 , b.spec 
+			 , fn_comcodenm(a.com_code, 'UNIT', b.unit) as unit 
+			 , a.in_qty
+			 , a.remark 
+			 , a.ord_no 
+			 , a.no 
+		  from (select aa.com_code 	
+					 , aa.fac_code 	
+					 , aa.regi_date  
+					 , aa.ilno 
+					 , aa.in_type
+					 , c.cust_code
+					 , aa.part_no
+					 , aa.in_qty
+					 , aa.remark 
+					 , aa.ord_no 
+					 , aa.no 
+		  		  from mat0012 aa
+		  		  left join mat0010 c on aa.com_code = c.com_code
+		  					 		 and aa.fac_code = c.fac_code
+		  					 		 and aa.ord_no = c.ord_no
+		  		 where in_status in ('20', '40')
+		  		 union 
+		  		select bb.com_code 	
+					 , bb.fac_code 	
+					 , bb.regi_date  
+					 , bb.ilno 
+					 , bb.in_type
+					 , d.cust_code
+					 , bb.part_no
+					 , bb.in_qty
+					 , bb.remark 
+					 , '' as ord_no 
+					 , '' as no 
+		  		  from mat0013 bb
+		  		  left join mat0013 d on bb.com_code = d.com_code 
+		  		  					 and bb.fac_code = d.fac_code 
+		  		  					 and bb.ilno = d.ilno
+		  		  ) a
+		  left join bas0040 b on a.com_code = b.com_code
+		  					 and a.part_no = b.part_no 
+		 <where>
+		 	<if test="comCode != null and comCode != ''">
+		 		<![CDATA[
+					AND a.com_code = #{comCode}
+				]]>
+		 	</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND a.fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="workFrDate != null and workFrDate != '' and workDate != null and workDate != ''" >
+				<![CDATA[
+					AND a.regi_date between #{workFrDate} and #{workDate}
+				]]>
+			</if>
+			<if test="inType != null and inType != ''">
+				<![CDATA[
+					AND a.in_type = #{inType}
+				]]>
+			</if>
+		 </where> 
+		   	order by a.regi_date desc, a.ilno  		  			
+    </select>
+       
+    
+    <!-- 재고현황 조회 구매 -->
+    <select id="getMat0018" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0012VO"	resultType="kr.co.igns.business.mat.model.mat0050.Mat0018VO">			
+			 select row_number() over(order by a.lot_detail) as id
+			 	  , a.com_code
+			 	  , a.fac_code 
+			 	  , a.lot_no 
+			 	  , a.lot_detail 
+			 	  , a.qty 
+			 	  , coalesce((select sum(ret_qty::numeric)
+			 	       from mat0030 
+			 	      where com_code = a.com_code
+			 	        and fac_code = a.fac_code
+			 	        and lot_detail = a.lot_detail), '0') as ret_qty
+			 	  , coalesce(b.stock_qty, '0') as stock_qty
+			 	  , a.ilno
+			 	  , a.ord_no
+			 	  , a.no
+			 	  , b.stock_amount as retAmount
+			   from mat0018 a
+			  left join mat0021 b on a.com_code = b.com_code 
+			   					  and a.fac_code = b.fac_code 
+			   					  and a.lot_detail = b.lot_detail
+			<where>
+				<if test="comCode != null and comCode != ''">
+					<![CDATA[
+						AND a.com_code = #{comCode}					
+					]]>
+				</if>
+				<if test="facCode != null and facCode != ''">
+					<![CDATA[
+						AND a.fac_code = #{facCode}
+					]]>
+				</if>
+				<if test="ilno != null and ilno != ''">
+					<![CDATA[
+						AND a.ilno = #{ilno}
+					]]>
+				</if>
+				<if test="no != null and no != ''">
+					<![CDATA[
+						AND a.no = #{no}
+					]]>
+				</if>
+			</where>
+			order by a.lot_detail
+	</select>
+	
+	<!-- 재고현황 조회2 기타,사급 -->
+    <select id="getMat0018_2" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0012VO"	resultType="kr.co.igns.business.mat.model.mat0050.Mat0018VO">			
+			 select row_number() over(order by a.lot_detail) as id
+			 	  , a.com_code
+			 	  , a.fac_code 
+			 	  , a.lot_no 
+			 	  , a.lot_detail 
+			 	  , a.qty 
+			 	  , coalesce((select sum(ret_qty::numeric)
+			 	       from mat0030 
+			 	      where com_code = a.com_code
+			 	        and fac_code = a.fac_code
+			 	        and lot_detail = a.lot_detail), '0') as ret_amount
+			 	  , coalesce(b.stock_qty, '0') as stock_qty
+			 	  , a.ilno
+			   from mat0014 a
+			   left join mat0021 b on a.com_code = b.com_code 
+			   					  and a.fac_code = b.fac_code 
+			   					  and a.lot_detail = b.lot_detail
+			<where>
+				<if test="comCode != null and comCode != ''">
+					<![CDATA[
+						AND a.com_code = #{comCode}					
+					]]>
+				</if>
+				<if test="facCode != null and facCode != ''">
+					<![CDATA[
+						AND a.fac_code = #{facCode}
+					]]>
+				</if>
+				<if test="ilno != null and ilno != ''">
+					<![CDATA[
+						AND a.ilno = #{ilno}
+					]]>
+				</if>
+			</where>
+			order by a.lot_detail
+	</select>
+	
+	
+	<!-- 반품내역 조회 구매 입고-->
+	<select id="getMat0030" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0012VO" resultType="kr.co.igns.business.mat.model.mat0050.Mat0030VO">
+		select row_number() over(order by a.ret_date desc, a.lot_detail) as id
+			 , a.com_code
+			 , a.fac_code
+			 , a.ret_no
+			 , b.lot_no
+			 , a.lot_detail
+			 , a.ord_no
+			 , a.no
+			 , a.ilno
+			 , a.ret_date
+			 , fn_comcodenm(a.com_code, 'SELECT_TYPE', a.ret_code) as ret_code
+			 , a.ret_qty
+			 , a.remark
+			 , a.make_date
+			 , a.maker
+			 , a.edit_date
+			 , a.editor
+			 , a.ret_amount
+		  from mat0030 a 
+		  left join mat0018 b on a.com_code = b.com_code
+		  				and a.fac_code = b.fac_code
+		  				and a.ord_no = b.ord_no
+		  				and a.no = b.no
+		  				and a.ilno = b.ilno
+		  				and a.lot_detail = b.lot_detail 
+		<where>
+			<if test="comCode != null and comCode != ''">
+					<![CDATA[
+						a.com_code = #{comCode}
+					]]>
+				</if>
+				<if test="facCode != null and facCode != ''">
+					<![CDATA[
+						AND a.fac_code = #{facCode}
+					]]>
+				</if>
+				<if test="ilno != null and ilno != ''">
+					<![CDATA[
+						AND a.ilno = #{ilno}
+					]]>
+				</if>
+				<if test="no != null and no != ''">
+					<![CDATA[
+						AND a.no = #{no}
+					]]>
+				</if>
+		</where>
+		order by a.ret_date desc, a.lot_detail
+	</select>
+	
+	<!-- 반품내역 조회 기타 사급-->
+	<select id="getMat0030_2" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0012VO" resultType="kr.co.igns.business.mat.model.mat0050.Mat0030VO">
+		select row_number() over(order by a.ret_date desc, a.lot_detail) as id
+			 , a.com_code
+			 , a.fac_code
+			 , a.ret_no
+			 , b.lot_no
+			 , a.lot_detail
+			 , a.ret_date
+			 , fn_comcodenm(a.com_code, 'SELECT_TYPE', a.ret_code) as ret_code
+			 , a.ret_qty
+			 , a.ilno
+			 , a.remark
+			 , a.make_date
+			 , a.maker
+			 , a.edit_date
+			 , a.editor
+			 , a.ret_amount
+		  from mat0030 a 
+		  left join mat0014 b on a.com_code = b.com_code
+		  				and a.fac_code = b.fac_code
+		  				and a.ilno = b.ilno
+		  				and a.lot_detail = b.lot_detail 
+		<where>
+			<if test="comCode != null and comCode != ''">
+					<![CDATA[
+						a.com_code = #{comCode}
+					]]>
+				</if>
+				<if test="facCode != null and facCode != ''">
+					<![CDATA[
+						AND a.fac_code = #{facCode}
+					]]>
+				</if>
+				<if test="ilno != null and ilno != ''">
+					<![CDATA[
+						AND a.ilno = #{ilno}
+					]]>
+				</if>
+		</where>
+		order by a.ret_date desc, a.lot_detail
+	</select>
+	
+	
+	<!-- 반품등록 -->
+	 <insert id="insertMat0030" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0030VO">
+	 <selectKey keyProperty="retNo" resultType="string" order="BEFORE">
+	 	select 'RT' || to_char(now(), 'yymmdd-') || lpad((coalesce(right(max(ret_no), 4), '0')::integer + 1)::text, 4, '0') 
+	 	  from mat0030
+	 	 where com_code = #{comCode}
+	 	   and fac_code = #{facCode}
+	 	   and ret_date = to_char(now(), 'yyyy-mm-dd')
+	 </selectKey>
+	 <![CDATA[
+    	INSERT INTO mat0030
+		    	(
+		    		  	com_code
+		    		  , fac_code
+		    		  , ret_no
+		    		  , lot_detail
+		    		  , ret_date
+		    		  , ret_code
+		    		  , ret_qty
+		    		  , ilno
+		    		  , ord_no
+		    		  , lot_no
+		    		  , no
+		    		  , remark
+		    		  , make_date
+		    		  , maker
+		    		  , ret_amount
+				)
+		values
+				(
+					  	#{comCode}
+		    		  , #{facCode}
+		    		  , #{retNo}
+		    		  , #{lotDetail}
+		    		  , to_char(now(), 'yyyy-mm-dd')
+		    		  , #{retCode}
+		    		  , #{retQty}
+		    		  , #{ilno}
+		    		  , #{ordNo}
+		    		  , #{lotNo}
+		    		  , #{no}
+		    		  , #{remark}
+		    		  , now()
+		    		  , #{maker}	
+		    		  , #{retAmount}		    	
+				)
+		]]>
+    </insert>
+    
+    <!-- 반품 등록후 기존 입고정보 수량,금액 수정 -->
+    <select id="updateMat0012" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0012VO" resultType="String">
+		UPDATE mat0012
+		   SET ret_amount = ret_amount::integer + #{retAmount}::integer
+		WHERE com_code = #{comCode}
+		  AND fac_code = #{facCode}
+		  AND ilno = #{ilno}
+		  AND ord_no = #{ordNo}
+		  AND no = #{no}
+		returning in_price	
+    </select>
+    
+    <!-- 반품 등록,삭제 후 창고별 재고현황의 금액,수량 수정 -->
+    <update id="updateRetMat0018" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0030VO">
+		UPDATE mat0018
+		   SET ret_amount = ret_amount::integer + #{retQty}::integer
+		WHERE fac_code = #{facCode}
+		  AND com_code = #{comCode}
+		  AND ord_no = #{ordNo}
+		  AND no = #{no}
+		  AND ilno = #{ilno}
+		  AND lot_detail = #{lotDetail}
+    </update>
+ 
+    
+    <!-- 반품내역 삭제 -->
+    <delete id="deleteMat0030" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0030VO">
+	   	DELETE 
+	   	  FROM mat0030
+	   	WHERE com_code = #{comCode}
+		  AND fac_code = #{facCode}
+		  AND ret_no = #{retNo}
+		  AND lot_detail = #{lotDetail}
+    </delete>  
+    
+    
+    <!-- 반품 등록,삭제 후재고상세현황의 금액,수량 수정 -->
+    <select id="updateMat0021" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0021VO"
+    		resultType="kr.co.igns.business.mat.model.mat0050.Mat0021VO"
+    >
+		UPDATE mat0021
+		   SET stock_qty = stock_qty::integer + #{retQty}::integer
+		   	 , stock_amount = stock_amount::integer + (coalesce(#{retAmount}, '0')::integer)
+		WHERE com_code = #{comCode}
+		  AND fac_code = #{facCode}
+		  AND lot_detail = #{lotDetail}
+		returning *
+    </select>
+  
+    <!-- 반품 등록,삭제 후 창고별 재고정보의 금액,수량 수정 -->
+    <update id="updateMat0020" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0021VO">
+		UPDATE mat0020
+		   SET stock_qty = stock_qty::integer + #{retQty}::integer
+		   	 , stock_amount = stock_amount::integer + (coalesce(#{retAmount}, '0')::integer)
+		WHERE com_code = #{comCode}
+		  AND fac_code = #{facCode}
+		  AND loc_code = #{locCode}
+		  AND part_no = #{partNo}
+		returning loc_code, part_no
+    </update>
+  
+  	
+     <!-- 반품 등록,삭제 후 창고별 재고현황의 수량 수정 -->
+    <update id="updateRetMat0014" parameterType="kr.co.igns.business.mat.model.mat0050.Mat0030VO">
+		UPDATE mat0014
+		   SET qty = qty::integer + #{retQty}::integer
+		WHERE com_code = #{comCode}
+		  AND fac_code = #{facCode}
+		  AND ilno = #{ilno}
+		  AND lot_detail = #{lotDetail}
+    </update>
+</mapper>

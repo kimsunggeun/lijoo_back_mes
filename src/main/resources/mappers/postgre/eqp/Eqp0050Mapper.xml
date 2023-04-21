@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.eqp.dao.postgre.Eqp0050Dao">
+        
+	<!-- 수리내역 조회 -->
+    <select id="getFacilityStatusItem" parameterType="kr.co.igns.business.eqp.model.eqp0050.Eqp0050Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0050.Eqp0050VO">
+    					
+    		select com_code
+    			 , fac_code
+    			 , eq_code
+    			 , rep_no
+    			 , reg_date
+    			 , occ_date
+    			 , act_date
+    			 , rep_remark
+    			 , rep_cust
+    			 , worker
+    			 , rep_amount
+    			 , remark
+    			 , maker
+    			 , make_date
+    			 , editor
+    			 , edit_date
+    		from eqp0050
+    		where eq_code = #{eqCode}
+    		order by rep_no
+    </select>
+    <!-- 점검항목 조회 -->
+    <select id="getChecklistItem" parameterType="kr.co.igns.business.eqp.model.eqp0050.Eqp0050Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0050.Eqp0050VO">
+    					
+    		select
+		  	  com_code
+			, fac_code
+			, insp_date
+			, eq_ins_type
+			, eq_code
+			, eq_insp_no
+			, eq_ins_code
+			, ins_type
+			, ins_meth
+			, jug_code
+			, ins_unit
+			, ins_base
+			, ins_upp
+			, ins_low
+			, judge
+			, mea_value
+			, remark
+			, make_date
+			, maker
+			, edit_date
+			, editor
+		from eqp0032
+		where eq_code = #{eqCode}
+    </select>
+    <!-- 예비품 정보 조회 -->
+    <select id="getSparpartInfo" parameterType="kr.co.igns.business.eqp.model.eqp0050.Eqp0050Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0050.Eqp0050VO">
+    		SELECT row_number() over() as id,
+	 		   a.com_code,
+			   a.fac_code,
+			   a.job_type,
+			   a.part_no,
+			   a.part_name,
+			   a.spec,
+			   a.qty,
+			   a.safe_qty,
+			   c.spare_type,
+			   c.qty,
+			   c.stock_code,
+			   a.grade,
+			   a.reg_date,
+			   a.unit,
+			   a.price,
+			   a.stock_code,
+			   a.spare_image,
+			   a.user_flag,
+			   c.make_date,
+			   c.maker,
+			   c.edit_date,
+			   c.editor
+	      FROM BAS0100 a inner join BAS0101 b
+	                             on a.com_code = b.com_code
+	                            and a.fac_code = b.fac_code
+	                            and a.part_no = b.part_no
+	                           join eqp0040 c 
+	                             on a.com_code = c.com_code
+	                            and a.fac_code = c.fac_code
+	                            and a.part_no = c.part_no
+	     WHERE b.com_code = #{comCode}
+	       and b.fac_code = #{facCode}
+	       and b.eq_code = #{eqCode}
+	     order by a.part_no
+    </select>
+    <!-- 예비품별 자원정보 조회 -->
+    <select id="getSparpartResInfo" parameterType="kr.co.igns.business.eqp.model.eqp0050.Eqp0050Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0050.Eqp0050VO">
+    		SELECT row_number() over() as id,
+	 		   com_code
+             , fac_code
+             , job_type
+             , part_no
+             , eq_code
+             , user_flag
+             , make_date
+             , maker
+             , edit_date
+             , editor
+	      FROM BAS0101
+	     WHERE com_code = #{comCode}
+	       and fac_code = #{facCode}
+	       and part_no = #{partNo}
+	       and eq_code = #{eqCode}
+    </select>
+</mapper>

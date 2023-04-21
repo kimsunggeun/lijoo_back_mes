@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0030Dao">
+
+	<select id="getReceiptInfo" parameterType="kr.co.igns.business.pop.model.Pop0030VO" resultType="kr.co.igns.business.pop.model.Pop0030VO">
+	
+		select a.*
+			 , b.lot_no
+			 , fn_partname(a.com_code, a.part_no) as part_name
+		from mat0013 a
+		join mat0014 b on b.com_code = a.com_code
+					  and b.fac_code = a.fac_code 
+					  and b.ilno = a.ilno
+		where a.com_code = #{comCode}
+		  and a.fac_code = #{facCode}
+		  and a.part_no = #{partNo}
+		  and a.cust_code = #{custCode}
+		  and b.lot_no = #{lotNo}
+		order by regi_date desc;
+
+	</select>
+
+</mapper>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0120Dao">
+	<!-- 거래처별 전표번호 -->
+	<select id="getinIlno" parameterType="kr.co.igns.business.pop.model.Pop0120ReqDto" resultType="String">
+		select distinct(in_ilno) as inIlno
+		from out0011
+		where com_code = #{comCode}
+		and fac_code = #{facCode}
+		and cust_code = #{custCode}
+		and out_yn = 'N';
+	</select>
+
+	<!-- 스캔 -->
+	<select id="getPop0120" parameterType="kr.co.igns.business.pop.model.Pop0120ReqDto" resultType="kr.co.igns.business.pop.model.Pop0120VO">
+		select 
+		 	*, qty as inQty
+		from out0011
+		where com_code = #{comCode}
+		and fac_code = #{facCode}
+		and cust_code = #{custCode}
+		<if test = 'outLotDetail != null and !outLotDetail.equals("")' >
+			and out_lot_detail = #{outLotDetail}
+		</if>
+		<if test = 'inIlno != null and !inIlno.equals("")' >
+			and in_ilno = #{inIlno}
+		</if>
+		and out_yn = 'N';
+	</select>
+	
+	<!-- 업데이트 -->
+	<update id="updatePop0120" parameterType="kr.co.igns.business.pop.model.Pop0120VO">
+		update pro0026
+			set out_deli_qty = (out_deli_qty::integer + #{qty}::integer)::varchar
+			  , out_wait_deli_qty = (out_wait_deli_qty::integer - #{qty}::integer)::varchar
+		where com_code   = #{comCode}
+		  and fac_code   = #{facCode}
+		  and work_no	 = #{workNo}
+		  and lot_detail = #{lotDetail};
+		   
+		update out0011
+			set out_yn = 'Y'
+		where com_code   = #{comCode}
+	   	  and fac_code   = #{facCode}
+		  and cust_code  = #{custCode}
+		  and lot_detail = #{lotDetail}
+		  and in_ilno = #{inIlno}
+	</update>
+	<insert id="insertPop0120" parameterType="kr.co.igns.business.pop.model.Pop0120VO">
+		<selectKey resultType="string" keyProperty="maxLotDetail" order="BEFORE">
+			select 'PRO' || to_char(now(),'yymmdd') || lpad((right(coalesce(max(lot_detail),'0'),4)::integer +1)::text,4,'0')
+			 from pro0025
+			 where lot_no = to_char(now(),'yymmdd')
+		</selectKey>
+		insert into pro0026
+		(
+			  com_code
+			, fac_code
+			, ilno
+			, pro_type
+			, work_no
+			, wh_code
+			, event_cd
+			, part_no
+			, qty
+			, pre_lot_no
+			, pre_lot_detail
+			, lot_no
+			, lot_detail
+			, cust_code
+			, out_deli_qty
+			, out_non_deli_qty
+			, out_wait_deli_qty
+			, user_flag
+			, maker
+			, make_date
+		)
+		values
+		(
+			  #{ comCode }
+			, #{ facCode }
+			, #{ ilno }
+			, #{proType}
+			, #{ workNo }
+			, 'Z1010'
+			, '20'
+			, #{ partNo }
+			, #{ qty }
+			, #{lotNo}
+			, #{lotDetail}
+			, TO_CHAR(NOW(), 'YYMMDD')
+			, #{maxLotDetail}
+			, #{ custCode }
+			, #{ outDeliQty }
+			, #{ outNonDeliQty }
+			, #{ outWaitDeliQty }
+			, 'Y'
+			, #{ maker }
+			, now()
+		);
+		insert into pro0025
+		(
+			  com_code
+			, fac_code
+			, ilno
+			, work_no
+			, work_date
+			, part_no
+			, qty
+			, event_cd
+			, lot_no
+			, lot_detail
+			, cancel_flag
+			, user_flag
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{ comCode }
+			, #{ facCode }
+			, #{ ilno }
+			, #{ workNo }
+			, current_date
+			, #{ partNo }
+			, #{ qty }
+			, '20'
+			, TO_CHAR(NOW(), 'YYMMDD')
+			, #{maxLotDetail}
+			, 'N'
+			, 'Y'
+			, now()
+			, #{ maker }
+		);
+	</insert>
+
+</mapper>

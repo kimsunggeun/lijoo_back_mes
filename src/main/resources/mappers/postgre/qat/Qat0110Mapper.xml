@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.qat.dao.postgre.Qat0110Dao">
+	
+	<!-- 납품정보 조회 -->
+	<select id="getQat0010" parameterType="kr.co.igns.business.qat.model.qat0110.Qat0110Dto" resultType="kr.co.igns.business.qat.model.qat0110.Qat0110VO">
+		SELECT 	  a.com_code
+			  	, a.fac_code
+			  	, a.ilno
+			  	, a.serial_no
+			  	, a.insp_date
+			  	, a.part_no
+			  	, a.insp_no
+			  	, a.ins_code
+			  	, a.ins_type
+			  	, a.ins_meth
+			  	, a.jug_codeh
+			  	, a.ins_unit
+			  	, a.judge
+			  	, a.sample1
+			  	, a.sample2
+			  	, a.sample3
+			  	, a.sample4
+			  	, a.sample5
+			  	, a.remark
+			  	, substring(a.make_date::varchar,0,20) as make_date
+			  	, a.maker
+			  	, substring(a.edit_date::varchar,0,20) as edit_date
+			  	, a.editor
+			  	, a.insp_time
+		     	, b.part_name
+		      	, d.cust_code 
+		FROM 	QAT0010 a
+		JOIN 	bas0040 b on a.com_code = b.com_code and a.part_no = b.part_no
+		join 	mat0010 d on a.com_code = d.com_code and a.insp_date = d.regi_date 
+		Where 	a.com_code = #{comCode}
+		<if test="facCode != null and facCode != ''">
+		and 	a.fac_code = #{facCode}
+		</if>
+		<if test="custCode != null and custCode != ''">
+		and 	d.cust_code = #{custCode}
+		</if>
+		<if test="insCode != null and insCode != ''">
+		and 	a.ins_code = #{insCode}
+		</if>
+		<if test="partNo != null and partNo != ''">
+		and 	UPPER(a.part_no) Like CONCAT( '%', UPPER(#{partNo}), '%')
+		</if>
+		<if test="partName != null and partName != ''">
+		and 	UPPER(b.part_name) like CONCAT( '%', UPPER(#{partName}), '%')
+		</if>
+	   	<if test="frRegiDate != null and frRegiDate != ''">
+	   	<![CDATA[
+		AND 	a.insp_date >= #{frRegiDate}	   
+	   	]]>
+	   	</if>
+	   	<if test="toRegiDate != null and toRegiDate != ''">
+	   	<![CDATA[
+		   	AND a.insp_date <= #{toRegiDate}
+	   	]]>
+	   	</if>
+	   	ORDER BY ilno, serial_no
+	</select>
+    
+</mapper>

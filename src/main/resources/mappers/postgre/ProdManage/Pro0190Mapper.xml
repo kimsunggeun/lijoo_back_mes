@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0190Dao">
+	<select id="getPro0190" parameterType="kr.co.igns.business.ProdManage.model.pro0190.Pro0190ReqDto" 
+							resultType="kr.co.igns.business.ProdManage.model.pro0190.Pro0190VO">
+   select com_code
+        , fac_code
+        , ilno
+   	    , work_no
+ 		, lot_detail
+     	, in_date
+     	, in_lot_detail
+     	, in_part_no
+     	, in_part_name
+     	, in_qty
+     	, work_code
+     	, work_decode
+     	, pro_type
+     	, def_code
+     	, part_no
+     	, part_name
+     	, qty
+     	, event_cd
+     	--, lot_no
+     	--, print_cnt
+     	--, cancel_flag
+     	--, wh_code
+     	, STRING_AGG(worker, ', ') as worker
+     	, make_date
+     	, maker 
+     	, edit_date 
+     	, editor
+from ( select a.com_code
+ 	 , a.fac_code
+ 	 , a.ilno
+     , a.work_no -- 작업지시번호
+     , a.lot_detail --생산lot번호
+     , to_char(b.make_date, 'YYYY-MM-DD') as in_date -- 투입일자
+     , b.mat_lot_detail as in_lot_detail --투입lot번호
+     , b.part_no as in_part_no --투입품번
+     , fn_partname(b.com_code, b.part_no) as in_part_name --투입품명
+     , b.pro_qty as in_qty --투입수량
+     --, a.work_code --작업장
+     , fn_workname(a.com_code, a.fac_code, a.work_code) as work_code 
+     --, a.work_decode --작업반
+     , fn_workdename(a.com_code, a.fac_code, a.work_code, a.work_decode) as work_decode
+     --, a.pro_type --생산 구분 코드
+     , fn_comcodenm(a.com_code, 'PRO_TYPE', a.pro_type) as pro_type
+     --, a.def_code --불량코드
+     , fn_comcodenm(a.com_code, 'DEF_CODE', a.def_code) as def_code
+     , a.part_no -- 품번
+     , fn_partname(a.com_code, a.part_no) as part_name --품명
+     , a.qty
+     --, a.event_cd
+     , fn_comcodenm(a.com_code, 'EVENT_CD', a.event_cd) as event_cd
+     --, a.lot_no
+     --, aa.print_cnt
+     --, a.cancel_flag
+     --, a.wh_code --창고
+     --, c.user_id --작업자
+     , fn_username(c.com_code, c.user_id) as worker --작업자명
+     --, STRING_AGG(fn_username(c.com_code, c.user_id), ', ') as worker --작업자명
+     , a.make_date
+     , a.maker 
+     , a.edit_date 
+     , a.editor 
+  from pro0026 a
+ --inner join pro0025 aa
+ --		 on a.com_code = aa.com_code
+ --       and a.fac_code = aa.fac_code
+ --       and a.lot_detail = aa.lot_detail
+ inner join pro0024 b 
+         on a.com_code = b.com_code
+        and a.fac_code = b.fac_code
+        and a.lot_detail = b.pro_lot_detail
+ inner join pro0022 c
+  		 on a.com_code = c.com_code
+        and a.fac_code = c.fac_code
+        and a.ilno = c.ilno
+        where b.make_date::varchar(10) between #{startDate} and #{endDate}
+			<if test="comCode != null and comCode != ''">
+				AND a.COM_CODE = #{comCode}
+			</if>
+			<if test="facCode != null and facCode != ''">
+				AND a.FAC_CODE = #{facCode}
+			</if>
+			<if test="proType != null and proType != ''">
+				AND a.pro_type = #{proType}
+			</if>			
+			<if test="workCode != null and workCode != ''">
+				AND a.WORK_CODE = #{workCode}
+			</if>
+			<if test="workDecode != null and workDecode != ''">
+				AND a.WORK_DECODE = #{workDecode}
+			</if>
+			<if test="partNo != null and partNo != ''">
+				AND a.PART_NO like #{partNo}
+			</if>
+			<if test="inputPartNo != null and inputPartNo != ''">
+				AND b.PART_NO like #{inputPartNo}
+			</if>
+			<if test="inputPartName != null and inputPartName != ''">
+				AND fn_partname(b.com_code, b.part_no) like #{inputPartName}
+			</if>
+        order by a.com_code
+ 	 , a.fac_code
+ 	 , a.ilno
+     , a.work_no
+     , a.lot_detail
+     , b.make_date
+     , b.mat_lot_detail
+     , b.part_no
+     , b.pro_qty
+     , a.work_code
+     , a.work_decode
+     , a.pro_type
+     , a.def_code
+     , a.part_no
+     , a.qty
+     , a.event_cd
+     --, a.lot_no
+     --, aa.print_cnt
+     --, a.cancel_flag
+     --, a.wh_code
+     , worker
+     , a.make_date
+     , a.maker 
+     , a.edit_date 
+     , a.editor ) tb
+	 group by com_code
+        	, fac_code
+        	, ilno
+   	    	, work_no
+ 			, lot_detail
+     		, in_date
+     		, in_lot_detail
+     		, in_part_no
+     		, in_part_name
+     		, in_qty
+     		, work_code
+     		, work_decode
+     		, pro_type
+     		, def_code
+     		, part_no
+     		, part_name
+     		, qty
+     		, event_cd
+     		--, lot_no
+     		--, print_cnt
+     		--, cancel_flag
+     		--, wh_code
+     		, make_date
+     		, maker 
+     		, edit_date 
+     		, editor
+	</select>
+</mapper>

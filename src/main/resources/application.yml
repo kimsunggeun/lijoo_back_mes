@@ -1,0 +1,123 @@
+--- # 공통설정
+springdoc:
+  version: '@project.version@'
+  api-docs:
+    path: /api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  swagger-ui:
+    #operations-sorter: alpha
+    tags-sorter: alpha
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    display-query-params-without-oauth2: true
+    doc-expansion: none
+    #servers:
+    # url: http://wmes.i-gns.co.kr
+  #paths-to-match:
+  # - /api/**
+    
+spring:
+  main:
+    allow-circular-references: true
+  profiles:                             # 동작 profile
+    active: dev
+  
+  messages:
+    basename: i18n/exception
+    encoding: UTF-8
+  file:                                 # 파일 업로드 설정 (kr.co.igns.framework.file.service.FileService)
+    upload-dir: D:/SmartMES Web/Files             
+    max-size: 1100000
+  jpa:
+    open-in-view: false
+    generate-ddl: true
+    properties:
+      hibernate:                        # 방언 설정        
+        show_sql: true                  # 하이버네이트가 실행하는 모든 SQL문을 콘솔로 출력        
+        format_sql: true                # 콘솔에 출력되는 JPA 실행 쿼리를 가독성있게 표현        
+        use_sql_comments: true          # 디버깅이 용이하도록 SQL문 이외에 추가적인 정보를 출력        
+        ddl_auto: create                # 서버 시작시 Entity와 실제 Table을 비교하여 변경된 내용을 반영하고, 없으면 새로 생성 (none, update) 
+
+restTemplate:                         # 다른 서버에 Rest요청을 할 때 필요한 설정을 해주는 클래스 (kr.co.igns.framework.config.restTemplate)
+  factory:
+     readTimeout: 5000
+     connectTimeout: 3000
+  httpClient:
+    maxConnTotal: 100
+    maxConnPerRoute: 5 
+
+#############################################################################################################################################################
+--- #개발(dev)
+server:                                 # 서버 설정
+  port: 40081
+  
+spring:
+  config:
+    activate:
+      on-profile: dev
+  redis:                                # redis 설정
+    host: 127.0.0.1
+    port: 6379
+  cache:
+    type: redis
+  datasource:                           # DB 접속정보 
+    hikari:
+      first:
+#        driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+#        jdbc-url: jdbc:log4jdbc:postgresql://192.168.3.200:6543/WEBMES
+#        username: webmes
+#        password: '!Gns#mes22'
+#        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+        jdbc-url: jdbc:log4jdbc:postgresql://192.168.2.240:5432/WEBMES
+        username: webmes
+        password: '!Gns#mes22'
+        type: com.zaxxer.hikari.HikariDataSource
+#      second:
+#        driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+#        jdbc-url: jdbc:log4jdbc:postgresql://192.168.3.204:5432/postgres
+#        username: igns
+#        password: igns
+#        type: com.zaxxer.hikari.HikariDataSource
+
+logging:                                # 로그 관련 설정
+  config: classpath:log4j/log4j2_dev.yml
+  level:
+    jdbc:
+     connection: OFF                    # open close 이벤트를 로그
+     sqlonly: OFF                       # SQL문만을 로그로 남기며, PreparedStatement일 경우 관련된 argument 값으로 대체된 SQL문이 보여짐
+     audit: OFF                         # ResultSet을 제외한 모든 JDBC 호출 정보 로그. 많은 양의 로그가 생성되므로 특별히 JDBC 문제를  
+                                        # 추적해야 할 필요가 있는 경우를 제외하고는 사용을 권장하지 않음
+     resultset: OFF                     # ResultSet을 포함한 모든 JDBC 호출 정보
+     resultsettable: INFO               # SQL 결과 조회된 데이터의 table
+     #sqltiming: INFO                   # SQL문과 해당 SQL을 실행시키는데 수행된 시간 정보(milliseconds)
+    
+#############################################################################################################################################################
+--- #운영(prod)
+server:                                 # 서버 설정
+  port: 9000
+  
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:                           # DB 접속정보 
+    hikari:
+      first:
+        driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+        jdbc-url: jdbc:log4jdbc:postgresql://localhost:5432/postgres
+        username: thub
+        password: thub0202!!
+        type: com.zaxxer.hikari.HikariDataSource
+        
+logging:                                # 로그 관련 설정
+  config: classpath:log4j/log4j2_prod.yml
+  level:
+    jdbc:
+     connection: OFF                    # open close 이벤트를 로그
+     sqlonly: OFF                       # SQL문만을 로그로 남기며, PreparedStatement일 경우 관련된 argument 값으로 대체된 SQL문이 보여짐
+     audit: OFF                         # ResultSet을 제외한 모든 JDBC 호출 정보 로그. 많은 양의 로그가 생성되므로 특별히 JDBC 문제를 추적해야 할 필요가 있는 경우를 제외하고는 사용을 권장하지 않음
+     resultset: OFF                     # ResultSet을 포함한 모든 JDBC 호출 정보
+     resultsettable: OFF                # SQL 결과 조회된 데이터의 table
+     #sqltiming: INFO                   # SQL문과 해당 SQL을 실행시키는데 수행된 시간 정보(milliseconds)

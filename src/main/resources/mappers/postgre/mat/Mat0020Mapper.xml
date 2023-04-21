@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0020Dao">
+        
+	<!-- 품목 정보 조회 -->
+    <select id="getItemInfo2" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+		select a.com_code, a.cust_code, a.part_no, b.part_name, b.spec, b.unit, b.part_type , c.price
+		from bas0044 a
+		join bas0040 b on a.com_code = b.com_code 
+						and a.part_no = b.part_no 
+						and b.user_flag = 'Y'
+		left join bas0045 c on a.cust_code  = c.cust_code 
+						   and b.part_no = c.part_no 
+						   and c.app_yn = 'Y' 
+						   and c.user_flag = 'Y'  
+		where 1 = 1
+		and a.user_flag = 'Y'
+		and a.com_code = #{comCode}
+		and a.cust_code = #{custCode}
+		and b.part_type = '10'
+		order by a.part_no asc
+    </select>        
+        
+        
+	<!-- 구매 발주정보 조회 -->
+    <select id="getMat0010" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0020ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0020.Mat0010VO">
+        select	row_number() over(order by a.ord_no) as id, a.*
+		from	mat0010 a
+		where a.com_code = #{comCode}
+		  and a.fac_code = #{facCode}
+		<if test='ordState != null and !ordState.equals("")'>
+		  AND a.ord_state = #{ordState}
+		</if>
+	    <if test='custCode != null and !custCode.equals("")'>
+	      AND a.cust_code  = #{custCode}
+	    </if>
+		 AND a.regi_date between #{startDate} and #{endDate}
+    </select>
+    
+    <insert id="createMat0010" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0010VO">
+   	  	<selectKey keyProperty="maxOrdNo" resultType="string" order="BEFORE">
+   			select case when MAX(ord_no) is null
+		         			then 'PO' || substr(replace(#{regiDate}, '-', ''), 3, 6) || '-0001'
+		         		else 'PO' || substr(replace(#{regiDate}, '-', ''), 3, 6) || '-' || lpad(((substring(MAX(ord_no), 10))::integer + 1)::text, 4, '0')
+		           end
+			from mat0010
+			where com_code = #{comCode}
+			  and fac_code = #{facCode}
+			  and regi_date = #{regiDate}
+	  	</selectKey>
+    	insert into mat0010
+    	(
+    		  com_code
+			, fac_code
+			, regi_date
+			, ord_no
+			, cust_code
+			, ord_state
+			, user_flag
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{regiDate}
+			, #{maxOrdNo}
+			, #{custCode}
+			, #{ordState}
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <update id="updateMat0010" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0010VO">
+		update mat0010
+		   set cust_code	= #{custCode}
+		   	 , regi_date	= #{regiDate}
+			 , ord_state	= #{ordState}
+			 , user_flag	= #{userFlag}
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and ord_no	= #{ordNo} 
+    </update>
+    
+    <update id="confirmMat0010" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0010VO">
+		update mat0010
+		   set cust_code	= #{custCode}
+			 , ord_state	= '20'
+			 , user_flag	= #{userFlag}
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and regi_date	= #{regiDate}
+		  and ord_no	= #{ordNo} 
+    </update>
+    
+    <update id="confirmCancelMat0010" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0010VO">
+		update mat0010
+		   set cust_code	= #{custCode}
+			 , ord_state	= '10'
+			 , user_flag	= #{userFlag}
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and regi_date	= #{regiDate}
+		  and ord_no	= #{ordNo} 
+    </update>
+    
+    <!-- 기간별외주발주현황(거래처별) 조회 -->
+    <select id="getMat0011toOut0110" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0020ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0020.Mat0011VO">
+        select 	distinct 
+        		a.fac_code
+        	  , a.regi_date
+        	  , b.cust_code
+        	  , b.ord_state
+        	  , a.ord_no
+        	  , a.no
+        	  , a.deli_date
+        	  , a.part_no
+        	  , a.qty
+        	  , a.price
+        	  , a.amount
+        	  , a.in_qty
+			  , a.wait_qty
+			  , a.rem_qty
+			  , a.ret_qty
+			  , a.user_flag
+		  	  , a.make_date
+			  , a.maker
+			  , a.edit_date
+			  , a.editor
+		  from 	mat0011 a
+		  join mat0010 b on b.ord_no = a.ord_no
+		 where	a.com_code = #{comCode}
+		   and	a.fac_code = #{facCode} 
+	<if test='custCode != null and custCode != ""'>
+		   and  b.cust_code = #{custCode}
+    </if>
+    <if test='dateType != null and dateType.equals("regiDate")'>
+    	   and  a.regi_date between #{startDate} and #{endDate}
+    </if>
+    <if test='dateType != null and dateType.equals("deliDate")'>
+    	   and  a.deli_date between #{startDate} and #{endDate}
+    </if>
+    <if test='partNo != null and partNo != ""'>
+    	   and  a.part_no like #{partNo}
+    </if>
+    order by regi_date desc
+    </select>
+    
+    <!-- 기간별외주발주현황(거래처별) - 일자별조회 조회 -->
+    <select id="getMat0011byDate" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0020ReqDto" 
+    					resultType="String">
+        select fn_getout0110bydate(#{comCode}, #{facCode}, #{partNo}, #{custCode}, #{startDate}, #{endDate}) as getout0110;
+    </select>
+    
+    <!-- 구매 발주정보 상세 조회 -->
+    <select id="getMat0011" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0020ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0020.Mat0011VO">
+        select 	row_number() over(order by a.ord_no, a.no) as id, fn_partname(a.com_code,a.part_no) as part_name, fn_partspec(a.com_code,a.part_no) as spec, a.*
+       		  , b.part_name
+       		  , b.lot_size
+       		  , b.in_insp
+       		  , b.in_wh
+       		  , b.part_type
+		  from 	mat0011 a
+		  join	bas0040 b on a.com_code = b.com_code and a.part_no = b.part_no 	
+		 where	a.com_code = #{comCode}
+		   and	a.fac_code = #{facCode}
+		   and	a.ord_no = #{ordNo}
+    </select>
+    
+    <insert id="createMat0011" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0011VO">
+    	insert into mat0011
+		(
+			  com_code
+			, fac_code
+			, ord_no
+			, no
+			, regi_date
+			, deli_date
+			, part_no
+			, qty
+			, price
+			, amount
+			, in_qty
+			, rem_qty
+			, ret_qty
+			, user_flag
+			, make_date
+			, maker
+			, wait_qty
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{ordNo}
+			, (select case when max(no) is null 
+			  		  then 
+			  		 		'1'
+			  		  else 
+			  		 		(max(no)::integer + 1)::text
+			  		   end
+			  	 from mat0011
+			    where com_code = #{comCode}
+			      and ord_no   = #{ordNo}
+			  )
+			, #{regiDate}
+			, #{deliDate}
+			, #{partNo}
+			, #{qty}
+			, #{price}
+			, #{qty}::int * #{price}::int
+			, #{inQty}
+			, #{qty}
+			, '0'
+			, #{userFlag}
+			, now()
+			, #{maker}
+			, '0'
+		)
+    </insert>
+    
+    <update id="updateMat0011" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0011VO">
+		update mat0011
+		   set deli_date	= #{deliDate}
+			 , part_no		= #{partNo}
+			 , qty			= #{qty}
+			 , price		= #{price}
+			 , amount		= #{amount}
+			 , in_qty		= #{inQty}
+			 , rem_qty		= #{remQty}
+			 , ret_qty		= #{retQty}
+			 , user_flag	= #{userFlag}
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and ord_no	= #{ordNo}
+		  and no		= #{no}
+		  and regi_date	= #{regiDate}
+		  and deli_date	= #{deliDate}
+    </update>
+    
+            <!-- 구매 발주정보 삭제 -->
+    <delete id="deleteMat0010" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0010VO">
+	   	delete from mat0010
+	   	where com_code  = #{comCode}
+	  	  and fac_code  = #{facCode} 
+		  and ord_no    = #{ordNo}
+		  and regi_date = #{regiDate}
+    </delete>  
+    
+    <select id="nullCheck_Mat0011" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0010VO"
+    								resultType="kr.co.igns.business.mat.model.mat0020.Mat0010VO">
+	   	select * from mat0011
+	   	where com_code  = #{comCode}
+	  	  and fac_code  = #{facCode} 
+		  and ord_no    = #{ordNo}
+    </select>  
+    
+            <!-- 구매 발주정보 상세 삭제 -->
+    <delete id="deleteMat0011" parameterType="kr.co.igns.business.mat.model.mat0020.Mat0011VO">
+	   	delete from mat0011
+	   	where com_code  = #{comCode}
+	  	  and fac_code  = #{facCode} 
+		  and ord_no    = #{ordNo}
+		  and no		= #{no}
+		  and regi_date = #{regiDate}
+    </delete>  
+    
+</mapper>

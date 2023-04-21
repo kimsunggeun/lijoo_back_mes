@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0050Dao">
+        
+	<!-- 작업지시 조회 -->
+    <select id="getPro0050" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050ReqDto" 
+    															resultType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050VO">
+		select  a.com_code as comCode, a.fac_code as facCode, plan_date as planDate, work_no as workNo, 
+				a.work_code as workCode,c.work_name as workName, 
+				a.work_decode as workDecode, fn_workdename(a.com_code, a.fac_code, a.work_code, a.work_decode) as workDeName, 
+				order_state as orderState, a.work_date as workDate,	pri_code as priCode, path_code as pathCode, 
+				fn_pathcodename(a.com_code, a.fac_code, a.path_code) as pathName, b.item_type as itemType, b.part_type as partType, 
+				b.part_no as partNo, b.part_name as partName, b.spec as partSpec, a.work_crew as workCrew, a.order_qty as orderQty, 
+				b.unit as partUnit, a.lot_no as lotNo, a.remark , a.plan_no as planNo, 
+				a.make_date as makeDate, a.maker, a.edit_date as editDate,a.editor 
+		from pro0010 a
+		left join bas0040 b on a.com_code = b.com_code and a.part_no = b.part_no
+		left join bas0034 c on a.com_code = c.com_code and a.work_code = c.work_code
+		where a.COM_CODE = #{comCode}
+		<if test="facCode != null and facCode != ''">
+			AND a.FAC_CODE = #{facCode}
+		</if>
+		<if test="workNo != null and workNo != ''">
+			AND a.WORK_NO = #{workNo}
+		</if>
+		<if test="frPlanDate != null and frPlanDate != ''">
+		<![CDATA[
+		   and a.plan_date >= #{frPlanDate}
+		]]>		   		   
+		</if>
+		<if test="toPlanDate != null and toPlanDate != ''">
+		<![CDATA[
+		   and a.plan_date <= #{toPlanDate}
+		]]>		   
+		</if>
+		and order_state &lt;= '40'
+		order by plan_date desc, work_no;
+    </select>
+    
+    <!-- 작업장 -->
+    <select id="getbas0034" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050ReqDto"
+    																resultType="kr.co.igns.business.ProdManage.model.pro0050.Bas0034VO">
+    	select work_code as workCode, work_name as workName
+    	from bas0034
+    	where com_code = #{comCode}
+    	and fac_code = #{facCode}																
+    </select>
+    
+    <!-- 작업반 -->
+	<select id="getbas0035" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050ReqDto"
+    																resultType="kr.co.igns.business.ProdManage.model.pro0050.Bas0035VO">
+    	select work_decode as workDeCode, work_dename as workDename
+    	from bas0035
+    	where com_code = #{comCode}
+    	and fac_code = #{facCode}
+    	and work_code = #{workCode}														
+    </select>
+    
+    <!-- 품목정보 팝업 -->
+    <select id="getPartInfo" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050ReqDto" 
+   															resultType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050PartInfoVO">
+   		select a.com_code as comCode, a.part_no as partNo, a.part_name as partName, a.spec as partSpec,
+   				a.item_type as itemType, fn_comcodenm(a.com_code,'ITEM_TYPE', a.item_type) as itemTypeNm, 
+   				a.part_type as partType, fn_comcodenm(a.com_code,'PART_TYPE', a.part_type) as partTypeNm,
+			(select path_code 
+			from bas0041 
+			where com_code = a.com_code 
+			and part_no = a.part_no 
+			order by CAST(nullif(path_type,'') AS INTEGER)
+			limit 1) as pathCode
+		from bas0040 a
+		where a.com_code = #{comCode}
+		and user_flag = 'Y';														
+   	</select>
+   	
+   	<!--라우팅 정보-->
+   	<select id="getPathInfo" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050PathDto" 
+   																resultType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050PathVO">
+	   	select path_type as pathType,  fn_comcodenm(#{comCode},'PATH_TYPE', path_type) as pathTypeNM , 
+				path_code as pathCode,
+				(select path_name from bas0037 where com_code = a.com_code  and path_code = a.path_code) as pathName
+		from bas0041 a
+		where com_code = #{comCode}
+		and PART_NO = #{partNo};
+   	</select>
+   	
+   	<select id="getPathWorkInfo" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050ReqDto" 
+   																resultType="kr.co.igns.business.ProdManage.model.pro0050.Bas0035VO">
+	   	SELECT A.pro_code as workCode
+	   		 , B.work_name as workName
+     	  FROM bas0038 A
+     	 INNER JOIN bas0034 B
+     	    ON A.com_code = B.com_code
+     	   AND A.fac_code = B.fac_code
+     	   AND A.pro_code = B.work_code
+         WHERE A.com_code  = #{comCode}
+           AND A.fac_code  = #{facCode}
+           AND A.path_code = #{pathCode}
+         ORDER BY A.proc_no
+   	</select>
+   	
+   	<!-- 작업지시 상태 변경 -->
+   	<select id="OrderState" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050VO" resultType="int">
+   		select fn_setpro0050(#{comCode},#{facCode},#{workNo},#{btnOrderState} );
+   	</select> 
+    
+    <!-- 작업지시 등록 -->
+    <insert id="createPro0050" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050VO">
+		INSERT INTO PRO0010
+		(com_code, 
+		fac_code,
+		 work_no, 
+		 plan_date, 
+		 work_date, 
+		 work_code, 
+		 work_decode, 
+		 order_state, 
+		 pri_code, 
+		 path_code, 
+		 work_crew, 
+		 part_no, 
+		 order_qty, 
+		 lot_no, 
+		 remark, 
+		 plan_no, 
+		 make_date, 
+		 maker
+		 )
+		VALUES
+		(
+		 #{comCode},
+		 #{facCode}, 
+		 (
+			select 'PR' || substring(replace(#{planDate}, '-', ''), 3)|| lpad((coalesce(nullif(right(max(work_no) ,4),''), '0' )::integer + 1)::text, 4, '0')
+			  from pro0010
+			 where com_code = #{comCode}
+			   and left(work_no,8) = 'PR' || substring(replace(#{planDate}, '-', ''), 3)
+		 ),
+		 #{planDate},
+		 #{workDate}, 
+		 #{workCode}, 
+		 #{workDecode}, 
+		 '10', 
+		 #{priCode}, 
+		 #{pathCode},
+		 #{workCrew},
+		 #{partNo}, 
+		 #{orderQty}, 
+		 to_char(now(),'YYMMDD') , 
+		 #{remark}, 
+		 #{planNo}, 
+		 now(), 
+		 #{maker});
+    </insert>
+    
+    <!-- 작업지시 수정 -->
+    <update id="updatePro0050" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050VO">
+    	UPDATE PRO0010 SET
+    			plan_date = #{planDate}, 
+    			work_date = #{workDate}, 
+    			work_code = #{workCode}, 
+    			work_decode = #{workDecode}, 
+    			order_state = #{orderState}, 
+    			pri_code = #{priCode}, 
+    			path_code = #{pathCode}, 
+    			work_crew = #{workCrew}, 
+    			part_no = #{partNo}, 
+    			order_qty = #{orderQty}, 
+    			lot_no = #{lotNo}, 
+    			remark = #{remark}, 
+    			plan_no = #{planNo}, 
+    			edit_date = now(), 
+    			editor = #{editor}
+		WHERE com_code = #{comCode} 
+		  AND fac_code = #{facCode} 
+		  AND work_no = #{workNo};
+    </update>
+    
+    <delete id="deletePro0050" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050ReqDto">
+    	DELETE FROM PRO0010
+		WHERE com_code = #{comCode} 
+		  AND fac_code = #{facCode} 
+		  AND work_no = #{workNo};
+    </delete>
+</mapper>

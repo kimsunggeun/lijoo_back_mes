@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Sal0120Dao">
+        
+     <!--일련번호 조회-->
+     <select id="getIlno" 
+     parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO"
+     resultType="String">
+     	select 'OC' || substr(replace(#{outDate}, '-', ''), 3, 6) || '-' || lpad((coalesce(max(right(ilno, 4)), '0')::integer + 1)::text, 4, '0') as ilno
+     	 from sal0120
+     	where com_code = #{comCode}
+     	  and fac_code = #{facCode}
+     	  and out_date = #{outDate}
+     </select>
+	<!-- 출하등록 정보 조회 -->
+    <select id="getSal0120" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120ReqDto" 
+    						resultType="kr.co.igns.business.sales.model.sal0120.Sal0120VO">
+        select row_number() over(order by a.ord_no asc, a.ilno asc, a.no asc) as id, a.*
+		from sal0120 a
+		where 1=1
+		<if test="comCode != null and comCode != ''">
+			and a.com_code = #{comCode}
+		</if>
+		<if test="facCode != null and facCode != ''">
+			and a.fac_code = #{facCode}
+		</if>				
+		<if test="startDate != null and startDate != ''">
+		<![CDATA[
+		   and a.out_date >= #{startDate}
+		]]>		   		   
+		</if>
+		<if test="endDate != null and endDate != ''">
+		<![CDATA[
+		   and a.out_date <= #{endDate}
+		]]>		   
+		</if>
+		order by a.ord_no asc, a.ilno asc, a.no asc			
+    </select>
+    
+	<!-- 출하현황 정보 조회 -->
+    <select id="getSal0120Status" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO" 
+    							  resultType="kr.co.igns.business.sales.model.sal0120.Sal0120VO">
+        select row_number() over(order by a.ilno desc, a.no desc) as id
+        	 , a.com_code
+        	 , a.fac_code
+        	 , a.ord_no
+        	 , a.ord_turn
+        	 , a.ilno
+        	 , a.no
+        	 , a.out_date
+        	 , a.out_insp_yn
+        	 , a.cust_code
+        	 , fn_custname(a.com_code, a.cust_code) as cust_name
+        	 , a.part_no
+        	 , fn_partname(a.com_code, a.part_no) 	as part_name
+        	 , a.lot_no
+        	 , a.lot_detail
+        	 , a.stock_qty
+        	 , a.qty
+        	 , b.price
+        	 , (a.qty::int * b.price::int)::text	as amount
+        	 , a.amount								as stock_amount
+        	 , a.close_month
+        	 , a.remark
+        	 , a.make_date
+        	 , a.maker
+        	 , a.edit_date
+        	 , a.editor
+		from sal0120 a
+		join sal0011 b on a.com_code = b.com_code
+					  and a.fac_code = b.fac_code
+					  and a.ord_no = b.ord_no
+					  and a.ord_turn = b.no
+		where 1=1
+		<if test="comCode != null and comCode != ''">
+			and a.com_code = #{comCode}
+		</if>
+		<if test="facCode != null and facCode != ''">
+			and a.fac_code = #{facCode}
+		</if>
+		<if test="ordNo != null and ordNo != ''">
+			and a.ord_no = #{ordNo}
+		</if>
+		<if test="no != null and no != ''">
+			and a.no = #{ordTurn}
+		</if>
+		<if test="partNo != null and partNo != ''">
+			and a.part_no = #{partNo}
+		</if>
+		order by a.ilno desc, a.no
+    </select>    
+    
+    <!-- 출하등록 정보 삽입 -->
+    <insert id="createSal0120" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO">
+    	insert into sal0120
+		( 
+			com_code
+			, fac_code
+			, ord_no
+			, ord_turn
+			, ilno
+			, no
+			, out_date
+			, out_insp_yn
+			, cust_code
+			, part_no
+			, lot_no
+			, lot_detail
+			, stock_qty
+			, qty
+			, price
+			, amount
+			, close_month
+			, close_yn
+			, confirm_yn
+			, remark
+			, make_date
+			, maker
+			, edit_date
+			, editor
+		)
+		values
+		( 
+			#{comCode}
+			, #{facCode}
+			, #{ordNo}
+			, #{ordTurn}
+			, #{ilno}
+			, #{no}
+			, #{outDate}
+			, #{outInspYn}
+			, #{custCode}
+			, #{partNo}
+			, #{lotNo}
+			, #{lotDetail}
+			, #{stockQty}
+			, #{outQty}
+			, #{price}
+			, #{amount}
+			, null
+			, null
+			, #{confirmYn}
+			, #{remark}
+			, now()
+			, #{maker}
+			, now()
+			, #{editor}
+		)
+    </insert>
+    
+   	<select id="getPrice" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO"
+   	 					   resultType="String">
+	   select (stock_amount::integer / stock_qty::integer)::text
+		 from mat0021
+		where com_code  = #{comCode}
+	 	  and fac_code = #{facCode}
+	 	  and loc_code = #{locCode}
+	 	  and part_no = #{partNo}
+	   	  and lot_detail = #{lotDetail}	   	 	   	 
+    </select>
+    
+    <select id="getLocCode" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO"
+   	 					   resultType="String">
+    	select loc_code
+    	  from mat0021
+    	 where com_code = #{comCode}
+    	   and fac_code = #{facCode}
+    	   and lot_detail = #{lotDetail} 	 	   	 
+    </select>
+    
+   	<update id="updateMat0021" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO">
+		update mat0021
+		   set stock_qty = stock_qty::integer - #{outQty}::integer
+			 , stock_amount	= stock_amount::integer - #{amount}::integer
+			 , out_qty = (coalesce(nullif(out_qty,''),'0')::integer + #{outQty}::integer)::text
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code  = #{comCode}
+	 	  and fac_code = #{facCode}
+	 	  and loc_code = #{locCode}
+	 	  and part_no = #{partNo}
+	   	  and lot_detail = #{lotDetail}	   	 	   	 
+    </update>     
+        
+    <update id="updateMat0020" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO">
+		update mat0020
+		   set stock_qty = stock_qty::integer - #{outQty}::integer
+			 , stock_amount	= stock_amount::integer - #{amount}::integer
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code  = #{comCode}
+	 	  and fac_code = #{facCode}
+	 	  and loc_code = #{locCode}
+	 	  and part_no = #{partNo}
+    </update>
+    
+    <!-- 출하등록 정보 수정 -->
+    <update id="updateSal0120" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO">
+    	update	sal0120
+		   set	stock_qty = #{stockQty}
+				, qty = #{qty}
+				, amount = #{amount}
+				, edit_date	= now()
+				, editor = #{editor}
+		 where	com_code = #{comCode}
+		   and	fac_code = #{facCode} 
+		   and	ord_no = #{ordNo}
+		   and	part_no	= #{partNo}
+		   and	ilno = #{ilno}
+		   and	no = #{no}
+    </update>
+    
+    <!-- 출하등록 정보 삭제 -->
+    <delete id="deleteSal0120" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120VO">
+    	delete	
+    	  from	sal0120
+    	 where	com_code = #{comCode}
+    	   and	fac_code = #{facCode}
+		   and	ord_no = #{ordNo}
+		   and	ilno = #{ilno}
+		   and	lot_detail = #{lotDetail}    	   
+    </delete>
+    
+    <!-- 수주현황 조회 - 수주번호/순번 기준 -->
+    <select id="getOrdStatusOnOrderNo" 
+    	parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120ReqDto" 
+    	resultType="kr.co.igns.business.sales.model.sal0120.Sal0012VO">
+        select row_number() over() as id,
+               a.com_code as comCode,
+		       a.fac_code as facCode,
+		       a.ord_no as ordNo,
+		       b.no as no,
+		       a.ord_date as ordDate,
+		       a.cust_code as custCode,
+		       (
+		       	select cust_name 
+		       	  from bas0023 
+		       	 where com_code = A.com_code 
+		       	   and cust_code = A.cust_code  
+		       ) AS custName,
+		       b.deli_date as deliDate,
+		       b.part_no as partNo,
+		       (
+		       	select part_name
+		       	  from bas0040
+		       	 where com_code = A.com_code 
+		       	   and part_no = B.part_no 
+		       ) as partName,
+		       b.qty as qty,
+		       b.out_qty as outQty,
+		       b.now_qty as nowQty,
+		       b.plan_qty as planQty,
+		       b.price as price,
+		       b.amount as amount,
+		       (
+		       	select out_insp
+		       	  from bas0040
+		       	 where com_code = A.com_code 
+		       	   and part_no = B.part_no
+		       ) as outInspYn,
+		       a.remark as remark,
+		       a.make_date as makeDate,
+		       a.maker as maker,
+		       a.edit_date as editDate,
+		       a.editor as editor
+		  from sal0010 as a
+		  join sal0011 as b on a.com_code  = b.com_code and a.fac_code  = b.fac_code and a.ord_no = b.ord_no		  
+		 where 1=1
+	   <if test="comCode != null and comCode != ''">
+		   AND a.com_code = #{comCode}		   
+	   </if>		   
+	   <if test="facCode != null and facCode != ''">
+		   AND a.fac_code = #{facCode}		   
+	   </if>
+	   <if test="ordNo != null and ordNo != ''">
+   		   AND a.ord_no = #{ordNo}	  
+	   </if>
+	   <if test="no != null and no != ''">
+   		   AND b.no = #{no}	  
+	   </if>   
+    </select>
+    
+    <!-- 수주현황 변경 - 수주번호/순번 기준 -->
+    <update id="updateOrdStatus" parameterType="kr.co.igns.business.sales.model.sal0120.Sal0011VO">
+    	update	sal0011
+    	   set 	out_qty = out_qty::integer + #{outQty}::integer
+    	   	  ,	now_qty	= now_qty::integer - #{outQty}::integer
+    	 where	com_code = #{comCode}
+    	 	and	fac_code = #{facCode}
+    	 	and	ord_no = #{ordNo}
+    	 	and	no = #{no}	
+    </update>
+        
+    <!-- 수주현황 조회 - 수주일 기준 -->
+    <select id="getOrdStatusOnOrderDate" 
+    	parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120ReqDto" 
+    	resultType="kr.co.igns.business.sales.model.sal0120.Sal0012VO">
+        SELECT row_number() over() as id,
+               A.com_code as comCode,
+		       A.fac_code as facCode,
+		       A.ord_no as ordNo,
+		       B.no as no,
+		       A.ord_date as ordDate,
+		       A.cust_code as custCode,
+		       (
+		       	SELECT cust_name 
+		       	  FROM bas0023 
+		       	 WHERE com_code = A.com_code 
+		       	   AND cust_code = A.cust_code  
+		       ) AS custName,
+		       B.deli_date as deliDate,
+		       B.part_no as partNo,
+		       (
+		       	SELECT part_name
+		       	  FROM bas0040
+		       	 WHERE com_code = A.com_code 
+		       	   AND part_no = B.part_no 
+		       ) AS partName,
+		       B.qty as qty,
+		       B.out_qty as outQty,
+		       B.now_qty as nowQty,
+		       B.plan_qty as planQty,
+		       B.price as price,
+		       B.amount as amount,
+		       (
+		       	SELECT out_insp
+		       	  FROM bas0040
+		       	 WHERE com_code = A.com_code 
+		       	   AND part_no = B.part_no
+		       ) AS outInspYn,
+		       A.remark as remark,
+		       A.make_date as makeDate,
+		       A.maker as maker,
+		       A.edit_date as editDate,
+		       A.editor as editor
+		  FROM sal0010 A, sal0011 B
+		 WHERE A.com_code  = B.com_code 
+		   AND A.fac_code  = B.fac_code 
+		   AND A.ord_no    = B.ord_no
+		   AND A.com_code  = #{comCode}		   
+	   <if test="facCode != null and facCode != ''">
+		   AND A.fac_code  = #{facCode}		   
+	   </if>
+	   <if test="custCode != null and custCode != ''">
+   		   AND A.cust_code  = #{custCode}	  
+	   </if>
+	   <if test="startDate != null and startDate != ''">
+   		<![CDATA[
+   		   AND A.ord_date >= #{startDate}
+   		]]>		   		   
+	   </if>
+	   <if test="endDate != null and endDate != ''">
+	    <![CDATA[
+	       AND A.ord_date <= #{endDate}
+	    ]]>		   
+	   </if>
+	   ORDER BY A.ord_no ASC, B.no ASC	   
+    </select>
+    
+    <!-- 수주현황 조회 - 납기일 기준 -->
+    <select id="getOrdStatusOnDeliveryDate" 
+    	parameterType="kr.co.igns.business.sales.model.sal0120.Sal0120ReqDto" 
+    	resultType="kr.co.igns.business.sales.model.sal0120.Sal0012VO">
+        SELECT row_number() over() as id,
+               A.com_code as comCode,
+		       A.fac_code as facCode,
+		       A.ord_no as ordNo,
+		       B.no as no,
+		       A.ord_date as ordDate,
+		       A.cust_code as custCode,
+		       (
+		       	SELECT cust_name 
+		       	  FROM bas0023 
+		       	 WHERE com_code = A.com_code 
+		       	   AND cust_code = A.cust_code  
+		       ) AS custName,
+		       B.deli_date as deliDate,
+		       B.part_no as partNo,
+		       (
+		       	SELECT part_name
+		       	  FROM bas0040
+		       	 WHERE com_code = A.com_code 
+		       	   AND part_no = B.part_no 
+		       ) AS partName,
+		       B.qty as qty,
+		       B.out_qty as outQty,
+		       B.now_qty as nowQty,
+		       B.plan_qty as planQty,
+		       B.price as price,
+		       B.amount as amount,
+		       (
+		       	SELECT out_insp
+		       	  FROM bas0040
+		       	 WHERE com_code = A.com_code 
+		       	   AND part_no = B.part_no
+		       ) AS outInspYn,
+		       A.remark as remark,
+		       A.make_date as makeDate,
+		       A.maker as maker,
+		       A.edit_date as editDate,
+		       A.editor as editor
+		  FROM sal0010 A, sal0011 B
+		 WHERE A.com_code  = B.com_code 
+		   AND A.fac_code  = B.fac_code 
+		   AND A.ord_no    = B.ord_no
+		   AND A.com_code  = #{comCode}		   
+	   <if test="facCode != null and facCode != ''">
+		   AND A.fac_code  = #{facCode}		   
+	   </if>
+	   <if test="custCode != null and custCode != ''">
+   		   AND A.cust_code  = #{custCode}	  
+	   </if>
+	   <if test="startDate != null and startDate != ''">
+   		<![CDATA[
+   		   AND B.deli_date >= #{startDate}
+   		]]>		   		   
+	   </if>
+	   <if test="endDate != null and endDate != ''">
+	    <![CDATA[
+	       AND B.deli_date <= #{endDate}
+	    ]]>		   
+	   </if>
+	   ORDER BY A.ord_no ASC, B.no ASC
+    </select>    
+    
+</mapper>

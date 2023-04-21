@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.baseInfo.bas0220.dao.postgre.Bas0220Dao">
+    
+	<!-- 품목선택 GET 신버전-->
+	<select id="getItemSelect" parameterType="kr.co.igns.business.baseInfo.bas0220.model.Bas0220Dto" resultType="kr.co.igns.business.baseInfo.bas0220.model.Bas0220VO_ITEM">        
+		select	row_number() over(order by a.part_no) as id,
+				a.com_code as comCode,
+				a.part_no as partNo,
+				a.part_name as partName,
+				a.spec as spec,
+				case when
+				(
+					select	distinct b.pa_part_no
+					  from	bas0043 as b
+					 where	b.pa_part_no = a.part_no 
+				) 
+				is null then 'X'
+				else 'O' end
+				as bomOx
+		  from	bas0040 as a
+		 where	1=1		
+	 	 <if test='comCode != null and !comCode.equals("")'>
+	       	AND a.com_code  = #{comCode}
+	     </if>
+	 	 <if test='itemType != null and !itemType.equals("")'>
+	 	 	AND a.item_type = #{itemType}
+	 	 </if>
+	 	 <if test='partType != null and !partType.equals("")'>
+	 	 	AND a.part_type = #{partType}
+	 	 </if>
+	 	 <if test='partNo != null and !partNo.equals("")'>
+	   	 	AND a.part_no LIKE '%' || #{partNo} || '%'
+	   	 </if>
+	   	 order by id asc;
+    </select>     
+    
+	<!-- BOM정전개 GET 신버전 -->
+	<select id="getBomExplosion" parameterType="kr.co.igns.business.baseInfo.bas0220.model.Bas0220Dto" resultType="kr.co.igns.business.baseInfo.bas0220.model.Bas0220VO_BOM">        
+		select 	c.parentId,
+				c.id,
+				e.com_code as comCode,
+				e.fac_code as facCode,
+				c.pa_part_no as paPartNo,
+				c.path_type as pathType,
+				c.path_code as pathCode,
+				e.path_name as pathName,
+				c.pro_no as proNo,
+				c.pro_code as proCode,
+				f.pro_name as proName,
+				c."level",
+				c.disp_no as dispNo,
+				c.part_no as partNo,
+				d.part_name as partName,
+				d.spec,
+				fn_comcodenm(d.com_code, 'UNIT', d.unit) as unitName,
+				c.amount
+		from	
+		(
+			with recursive	search_bom (level, pa_part_no, path_type, path_code, pro_no, pro_code, disp_no, part_no, amount, path, cycle) as
+				(
+					select	1, a.pa_part_no, a.path_type, a.path_code, a.pro_no, a.pro_code, a.disp_no, a.part_no, a.amount, 
+							array[a.part_no::text], false
+					  from	bas0043 as a
+					 where 	a.com_code = #{comCode} and a.fac_code = #{facCode} and a.pa_part_no = #{partNo}
+					 union	
+					select 	b."level" + 1, a.pa_part_no, a.path_type, a.path_code, a.pro_no, a.pro_code, a.disp_no, a.part_no, a.amount, 
+							array_append(b.path, a.part_no::text),
+							a.part_no = any(b.path) 
+					  from	bas0043 as a, search_bom as b
+					 where 	a.com_code = #{comCode} and a.fac_code = #{facCode} and a.pa_part_no = b.part_no and not cycle
+				)
+				
+			  select	0 as parentId,
+			  			row_number() over(order by a.level asc, a.pa_part_no asc, a.path_type asc, a.path_code asc, a.pro_no asc, a.disp_no) as id,
+						a.*
+				from	search_bom as a
+			order by	a.level asc, a.pa_part_no asc, a.path_type asc, a.path_code asc, a.pro_no asc, a.disp_no asc
+		) as	c
+		join	bas0040 as d on c.part_no = d.part_no
+		join	bas0037	as e on c.path_code = e.path_code
+		join 	bas0031 as f on c.pro_code = f.pro_code	
+		order by c.id asc 
+    </select>     
+    
+</mapper> 

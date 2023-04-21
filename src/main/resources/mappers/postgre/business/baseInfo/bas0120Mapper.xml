@@ -1,0 +1,778 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.baseInfo.bas0120.dao.postgre.Bas0120Dao">
+
+	<!-- 자동투입창고  -->
+    <select id="getAutoStorage" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0033VO">        
+        SELECT loc_code, loc_name
+     	  FROM bas0033
+         WHERE com_code = #{comCode}
+    </select>
+    
+    	<!-- 공정명  -->
+    <select id="getProcessName" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0031VO">        
+        SELECT pro_code, pro_name
+     	  FROM bas0031
+         WHERE com_code = #{comCode}
+    </select>
+    
+    	<!-- 공장명  -->
+    <select id="getFacName" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0030VO">        
+        SELECT fac_code, fac_name
+     	  FROM bas0030
+         WHERE com_code = #{comCode}
+    </select>
+    
+    <!-- 공장정보 GET -->
+    <select id="getFacInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0030VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , fac_name
+        	 , fac_number
+        	 , name
+        	 , post_no
+        	 , addr
+        	 , tel
+        	 , fax
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor
+        	 , user_flag
+     	  FROM bas0030 
+         WHERE com_code = #{comCode}
+    </select>
+    
+    <!-- 공정정보 GET -->    
+    <select id="getProcInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0031VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , pro_code
+        	 , pro_name
+        	 , pro_type
+        	 , cat_type  
+        	 , sort_flag
+        	 , remark
+        	 , user_flag
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor
+     	  FROM bas0031 
+         WHERE com_code = #{comCode}
+           AND fac_code = #{facCode}
+         ORDER BY sort_flag 
+    </select>
+    
+    <!-- 창고정보	GET -->
+    <select id="getWareHouseInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0032VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , wh_code
+        	 , wh_name
+        	 , wh_type
+        	 , wh_desc
+        	 , sort_flag
+        	 , remark
+        	 , user_flag
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor  
+     	  FROM bas0032 
+         WHERE com_code = #{comCode}
+           AND fac_code = #{facCode}
+         ORDER BY sort_flag 
+    </select>
+    
+    <!-- 창고위치정보 GET  -->
+    <select id="getWareHouseLocInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0033VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , wh_code
+        	 , loc_code
+        	 , loc_name
+        	 , sort_flag
+        	 , remark
+        	 , user_flag
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor  
+     	  FROM bas0033 
+         WHERE com_code = #{comCode}
+           AND fac_code = #{facCode}
+           <if test='whCode != null and !whCode.equals("")'>
+           AND wh_code  = #{whCode}   
+           </if>
+         ORDER BY sort_flag       
+    </select>
+    
+    <!-- 작업장정보 GET  -->
+    <select id="getWorkShopInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0034VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , work_code
+        	 , work_name
+        	 , work_type
+        	 , work_desc
+        	 , dep_code
+        	 , sort_flag
+        	 , remark
+        	 , user_flag
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor  
+     	  FROM bas0034 
+         WHERE com_code = #{comCode}
+           AND fac_code = #{facCode}
+         ORDER BY sort_flag 
+    </select>
+    
+    <!-- 작업반정보 GET  -->
+    <select id="getWorkPartyInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0035VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , work_code
+        	 , work_decode
+        	 , work_dename
+        	 , work_dedesc
+        	 , pro_code
+        	 , in_wh
+        	 , out_wh
+        	 , per_wh
+        	 , sort_flag
+        	 , remark
+        	 , user_flag
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor  
+     	  FROM bas0035 
+         WHERE com_code  = #{comCode}
+           AND fac_code  = #{facCode}
+           AND work_code = #{workCode}
+         ORDER BY sort_flag 
+    </select>
+    
+    <!-- 설비정보 GET  -->
+    <select id="getFacilityInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0036VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , eq_code
+        	 , eq_name
+        	 , eq_spec
+        	 , eq_grade
+        	 , pro_code
+        	 , eq_state
+        	 , make_com
+        	 , per_com
+        	 , pro_date
+        	 , ins_date
+        	 , des_date
+        	 , eqp_image
+        	 , remark
+        	 , user_flag
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor
+        	 , day_insp_yn
+        	 , day_insp_dt
+        	 , day_insp_next_dt
+        	 , peri_insp_yn
+        	 , peri_insp_cycle
+        	 , peri_insp_dt
+        	 , peri_insp_next_dt
+        	 , pre_str
+        	 , mold_loc
+     	  FROM bas0036 
+         WHERE com_code = #{comCode}
+           AND fac_code = #{facCode}
+      ORDER BY eq_code
+           
+    </select>
+    
+    <!-- 경로정보(라우팅) GET  -->
+    <select id="getRoutingInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0037VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , path_code
+        	 , path_name
+        	 , sort_flag
+        	 , remark
+        	 , user_flag
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor  
+     	  FROM bas0037 
+         WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode}    
+         ORDER BY sort_flag 
+    </select>
+    
+    <!-- 경로정보  GET  -->
+    <select id="getRouteInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0120Dto" resultType="kr.co.igns.business.baseInfo.bas0120.model.Bas0038VO">        
+        SELECT com_code
+        	 , fac_code
+        	 , path_code
+        	 , proc_no
+        	 , wh_code
+        	 , remark
+        	 , user_flag
+        	 , make_date
+        	 , fn_username(com_code, maker) as maker
+        	 , edit_date  
+        	 , fn_username(com_code, editor) as editor
+        	 , pro_code  
+     	  FROM bas0038
+         WHERE com_code  = #{comCode}
+           AND fac_code  = #{facCode}
+           AND path_code = #{pathCode}
+         ORDER BY proc_no
+    </select>
+    
+    <!-- 공장정보 Create -->
+    <insert id="ctFacInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0030VO">
+    	INSERT INTO bas0030
+		(
+			  com_code
+			, fac_code
+			, fac_name			
+			, fac_number			
+			, name			
+			, post_no
+			, addr
+			, tel
+			, fax
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{facName}		
+			, #{facNumber}			
+			, #{name}			
+			, #{postNo}
+			, #{addr}
+			, #{tel}
+			, #{fax}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 공정정보 Create -->
+    <insert id="ctProcInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0031VO">
+    	INSERT INTO bas0031
+		(
+			  com_code
+			, fac_code
+			, pro_code
+			, pro_name
+			, pro_type
+			, cat_type
+			, sort_flag
+			, remark			
+			, user_flag			
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{proCode}
+			, #{proName}
+			, #{proType}
+			, #{catType}
+			, #{sortFlag}
+			, #{remark}			
+			, #{userFlag}			
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 창고정보 Create -->
+    <insert id="ctWareHouseInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0032VO">
+    	INSERT INTO bas0032
+		(
+			  com_code
+			, fac_code
+			, wh_code
+			, wh_name
+			, wh_type
+			, wh_desc
+			, sort_flag
+			, remark			
+			, user_flag			
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{whCode}
+			, #{whName}
+			, #{whType}
+			, #{whDesc}
+			, #{sortFlag}
+			, #{remark}			
+			, #{userFlag}		
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 창고위치정보 Create -->
+    <insert id="ctWareHouseLocInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0033VO">
+    	INSERT INTO bas0033
+		(
+			  com_code
+			, fac_code
+			, wh_code
+			, loc_code
+			, loc_name
+			, sort_flag
+			, remark			
+			, user_flag			
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{whCode}
+			, #{locCode}
+			, #{locName}
+			, #{sortFlag}
+			, #{remark}		
+			, #{userFlag}			
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 작업장정보 Create -->
+    <insert id="ctWorkShopInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0034VO">
+    	INSERT INTO bas0034
+		(
+			  com_code
+			, fac_code
+			, work_code
+			, work_name
+			, work_type
+			, work_desc
+			, dep_code
+			, sort_flag
+			, remark			
+			, user_flag			
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{workCode}
+			, #{workName}
+			, #{workType}
+			, #{workDesc}
+			, #{depCode}
+			, #{sortFlag}
+			, #{remark}			
+			, #{userFlag}		
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 작업반정보 Create -->
+    <insert id="ctWorkPartyInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0035VO">
+    	INSERT INTO bas0035
+		(
+			  com_code
+			, fac_code
+			, work_code
+			, work_decode
+			, work_dename
+			, work_dedesc
+			, pro_code
+			, in_wh
+			, out_wh
+			, per_wh
+			, sort_flag
+			, remark			
+			, user_flag			
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{workCode}
+			, #{workDecode}
+			, #{workDename}
+			, #{workDedesc}
+			, #{proCode}
+			, #{inWh}
+			, #{outWh}
+			, #{perWh}
+			, #{sortFlag}
+			, #{remark}			
+			, #{userFlag}			
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 설비정보 Create -->
+    <insert id="ctFacilityInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0036VO">
+    	INSERT INTO bas0036
+		(
+			  com_code
+			, fac_code
+			, eq_code
+			, eq_name
+			, eq_spec
+			, eq_grade
+			, eq_state
+			, make_com
+			, per_com
+			, pro_date
+			, ins_date
+			, des_date
+			, eqp_image
+			, day_insp_yn
+			, peri_insp_yn
+			, peri_insp_cycle
+			, remark			
+			, user_flag			
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{eqCode}
+			, #{eqName}
+			, #{eqSpec}
+			, #{eqGrade}
+			, #{eqState}
+			, #{makeCom}
+			, #{perCom}
+			, #{proDate}
+			, #{insDate}
+			, #{desDate}
+			, #{dayInspYn}
+			, #{periInspYn}
+			, #{periInspCycle}
+			, #{eqpImage}
+			, #{remark}		
+			, #{userFlag}			
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 경로정보(라우팅) Create -->
+    <insert id="ctRoutingInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0037VO">
+    	INSERT INTO bas0037
+		(
+			  com_code
+			, fac_code
+			, path_code
+			, path_name
+			, sort_flag
+			, user_flag			
+			, remark			
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{pathCode}
+			, #{pathName}
+			, #{sortFlag}
+			, #{userFlag}		
+			, #{remark}		
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 경로정보 Create -->
+    <insert id="ctRouteInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0038VO">
+    	INSERT INTO bas0038
+		(
+			  com_code
+			, fac_code
+			, path_code
+			, pro_code
+			, proc_no
+			, wh_code
+			, remark
+			, user_flag						
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{pathCode}
+			, #{proCode}
+			, #{procNo}
+			, #{whCode}
+			, #{remark}
+			, #{userFlag}					
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    
+    <!-- 공장정보 Update -->
+    <update id="utFacInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0030VO">
+    	UPDATE bas0030
+		   SET fac_name	  = #{facName}
+			 , fac_number = #{facNumber} 
+			 , name	      = #{name}  
+			 , post_no	  = #{postNo}
+			 , addr		  = #{addr}
+			 , tel		  = #{tel}
+			 , fax		  = #{fax}
+			 , user_flag  = #{userFlag}
+			 , edit_date	  = now()
+			 , editor	  = #{editor}
+		 WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode} 
+    </update>
+    
+    <!-- 공정정보 Update -->
+    <update id="utProcInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0031VO">
+    	UPDATE bas0031
+		   SET pro_name	  = #{proName}
+			 , pro_type   = #{proType} 
+			 , cat_type	  = #{catType}  
+			 , sort_flag  = #{sortFlag}
+			 , remark	  = #{remark}
+			 , user_flag  = #{userFlag}			 
+			 , edit_date	  = now()
+			 , editor	  = #{editor}
+		 WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode} 
+		   AND pro_code = #{proCode} 
+    </update>
+    
+    <!-- 창고정보 Update -->
+    <update id="utWareHouseInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0032VO">
+    	UPDATE bas0032
+		   SET wh_name	  = #{whName}
+			 , wh_type    = #{whType} 
+			 , wh_desc    = #{whDesc} 
+			 , sort_flag  = #{sortFlag}
+			 , remark	  = #{remark}
+			 , user_flag  = #{userFlag}			 
+			 , edit_date	  = now()
+			 , editor	  = #{editor}
+		 WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode} 
+		   AND wh_code  = #{whCode} 
+    </update>
+    
+    <!-- 창고위치정보 Update -->
+    <update id="utWareHouseLocInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0033VO">
+    	UPDATE bas0033
+		   SET loc_name	 = #{locName}
+			 , sort_flag = #{sortFlag}
+			 , remark	 = #{remark}
+			 , user_flag = #{userFlag}			 
+			 , edit_date	 = now()
+			 , editor	 = #{editor}
+		 WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode} 
+		   AND wh_code  = #{whCode} 
+		   AND loc_code = #{locCode} 
+    </update>
+    
+    <!-- 작업장정보 Update -->
+    <update id="utWorkShopInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0034VO">
+    	UPDATE bas0034
+		   SET work_name = #{workName}
+		     , work_type = #{workType} 
+		     , work_desc = #{workDesc} 
+		     , dep_code  = #{depCode} 
+			 , sort_flag = #{sortFlag}
+			 , remark	 = #{remark}
+			 , user_flag = #{userFlag}			 
+			 , edit_date	 = now()
+			 , editor	 = #{editor}
+		 WHERE com_code  = #{comCode}
+		   AND fac_code  = #{facCode} 
+		   AND work_code = #{workCode} 
+    </update>
+    
+    <!-- 작업반정보 Update -->
+    <update id="utWorkPartyInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0035VO">
+    	UPDATE bas0035
+		   SET work_dename = #{workDename}
+		     <!-- , work_type = #{workType} //작업반 정보에는 workType이 존재하지 않음 -->
+		     , work_dedesc = #{workDedesc} 
+		      <!--, dep_code  = #{depCode} //작업반 정보에는 depCode가 존재하지 않음-->
+		      <!-- 추가한 부분 -->
+		     , pro_code = #{proCode}
+		     , in_wh = #{inWh}
+		     , out_wh = #{outWh}
+		     , per_wh = #{perWh}
+		      <!-- 추가한 부분 -->
+			 , sort_flag = #{sortFlag}
+			 , remark	 = #{remark}
+			 , user_flag = #{userFlag}			 
+			 , edit_date	 = now()
+			 , editor	 = #{editor}
+		 WHERE com_code    = #{comCode}
+		   AND fac_code    = #{facCode} 
+		   AND work_code   = #{workCode} 
+		   AND work_decode = #{workDecode} 
+    </update>
+    
+    <!-- 설비정보 Update -->
+    <update id="utFacilityInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0036VO">
+    	UPDATE bas0036
+		   SET eq_name   = #{eqName}
+		     , eq_spec   = #{eqSpec} 
+		     , eq_grade  = #{eqGrade} 
+		     , eq_state  = #{eqState} 
+		     , make_com  = #{makeCom} 
+		     , per_com   = #{perCom} 
+		     , pro_date  = #{proDate} 
+		     , ins_date  = #{insDate} 
+		     , des_date  = #{desDate} 
+		     , eqp_image = #{eqpImage}		      
+			 , remark	 = #{remark}
+			 , user_flag = #{userFlag}			 
+			 , edit_date = now()
+			 , editor	 = #{editor}
+		 WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode} 
+		   AND eq_code  = #{eqCode} 
+    </update>
+    
+    <!-- 경로정보(라우팅) Update -->
+    <update id="utRoutingInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0037VO">
+    	UPDATE bas0037
+		   SET path_name = #{pathName}
+			 , sort_flag = #{sortFlag}
+			 , remark	 = #{remark}
+			 , user_flag = #{userFlag}			 
+			 , edit_date	 = now()
+			 , editor	 = #{editor}
+		 WHERE com_code  = #{comCode}
+		   AND fac_code  = #{facCode} 
+		   AND path_code = #{pathCode} 
+    </update>
+    
+    <!-- 경로정보 Update -->
+    <update id="utRouteInfo" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0038VO">
+    	UPDATE bas0038
+		   SET wh_code   = #{whCode}
+			 , remark	 = #{remark}
+			 , user_flag = #{userFlag}			 
+			 , edit_date	 = now()
+			 , editor	 = #{editor}
+		 WHERE com_code  = #{comCode}
+		   AND fac_code  = #{facCode} 
+		   AND path_code = #{pathCode}
+		   AND pro_code = #{proCode}
+		   AND proc_no = #{procNo} 
+    </update>
+    
+	<!-- 공장정보 delete -->
+    <delete id="deleteFac" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0030VO">
+	   	delete from bas0030 
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+    </delete>
+    
+   	<!-- 공정정보 delete -->
+    <delete id="deleteProc" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0031VO">
+	   	delete from bas0031 
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+	  	  and pro_code = #{proCode}
+    </delete>
+    
+   	<!-- 창고정보 delete -->
+    <delete id="deleteWareHouse" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0032VO">
+	   	delete from bas0032 
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+	  	  and wh_code  = #{whCode}
+    </delete>    
+    
+   	<!-- 창고위치정보 delete -->
+    <delete id="deleteWareHouseLoc" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0033VO">
+	   	delete from bas0033 
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+	  	  and wh_code  = #{whCode}
+	  	  and loc_code = #{locCode}
+    </delete>   
+    
+   	<!-- 작업장정보 delete -->
+    <delete id="deleteWorkShop" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0034VO">
+	   	delete from bas0034 
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+	  	  and work_code = #{workCode}
+    </delete>   
+    
+  	<!-- 작업반정보 delete -->
+    <delete id="deleteWorkParty" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0035VO">
+	   	delete from bas0035 
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+	  	  and work_code = #{workCode}
+	  	  and work_decode = #{workDecode}
+    </delete>   
+    
+   	<!-- 설비정보 delete -->
+    <delete id="deleteFacility" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0036VO">
+	   	delete from bas0036
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+	  	  and eq_code  = #{eqCode}
+    </delete>  
+    
+   	<!-- 경로정보(라우팅) delete -->
+    <delete id="deleteRouting" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0037VO">
+	   	delete from bas0037
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+	  	  and path_code = #{pathCode}
+    </delete>  
+    
+  	<!-- 경로정보 delete -->
+    <delete id="deleteRoute" parameterType="kr.co.igns.business.baseInfo.bas0120.model.Bas0038VO">
+	   	delete from bas0038
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+	  	  and path_code = #{pathCode}
+	  	  and pro_code = #{proCode}
+	  	  and proc_no = #{procNo} 
+    </delete>  
+    
+</mapper>

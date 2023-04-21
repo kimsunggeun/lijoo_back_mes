@@ -1,0 +1,11 @@
+diff a/.gitignore.rej b/.gitignore.rej	(rejected hunks)
+@@ -0,0 +1,9 @@
++diff a/.gitignore b/.gitignore	(rejected hunks)
++@@ -71,6 +71,7 @@
++ src/main/java/kr/co/igns/business/baseInfo/bas0220/model/Bas0220VO_BOM.java
++ src/main/java/kr/co/igns/business/baseInfo/bas0220/model/Bas0220VO_ITEM.java
++ src/main/java/kr/co/igns/business/pop/controller/Pop0210Controller.java.rej
+++.temp-wmes-backend - IgnsApplication-classpath-arg-1675068108387.txt
++ .temp-wmes-backend - IgnsApplication-classpath-arg-1675122893757.txt
++ .temp-wmes-backend - IgnsApplication-classpath-arg-1675127029377.txt
++ .temp-wmes-backend - IgnsApplication-classpath-arg-1675140406243.txt

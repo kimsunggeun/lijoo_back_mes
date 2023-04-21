@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.out.dao.postgre.Out0120Dao">
+        
+	<!-- 기간별공정외주입고현황 조회 -->
+    <select id="getOut0120" parameterType="kr.co.igns.business.out.model.out0120.Out0120ReqDto" 
+    					       resultType="kr.co.igns.business.out.model.out0120.Out0120VO">
+      	select a.fac_code
+      		 , a.cust_code
+	 		 , a.ilno
+	 		 , a.work_no
+	 		 , a.lot_detail
+	 		 , a.in_date
+	 		 , a.in_ilno 
+	 		 , a.in_no
+	 		 , a.next_proc_no
+	 		 , a.lot_no
+	 		 , a.out_lot_detail
+	 		 , a.pro_type
+	 		 , a.part_no
+	 		 , a.qty
+	 		 , a.in_price
+	 		 , a.in_amount
+	 		 , a.out_insp_code
+	 		 , a.remark
+	 		 , a.print_type
+	 		 , a.user_flag
+	 		 , a.make_date
+	 		 , a.maker 
+	 		 , a.edit_date 
+	 		 , a.editor 
+			from out0011 a
+		where a.com_code = #{comCode}
+		  and a.in_date between #{startDate} and #{endDate}
+		<if test="facCode != null and facCode != ''">
+		  and a.fac_code = #{facCode}
+		</if>
+		<if test="custCode != null and custCode != ''">
+		  and a.cust_code = #{custCode}
+		</if>		
+		<if test="partNo != null and partNo != ''">
+		  and a.part_no like #{partNo}
+		</if>
+		<if test="inIlno != null and inIlno != ''">
+		  and a.in_ilno like #{inIlno}
+		</if>
+		 order by lot_no desc, in_ilno, in_no
+    </select>
+    
+    <!-- 기간별공정외주입고현황 - 일자별조회 조회 -->
+    <select id="getOut0120byDate" parameterType="kr.co.igns.business.out.model.out0120.Out0120ReqDto" 
+    					       resultType="String">
+      	select fn_getout0120bydate(#{comCode}, #{facCode}, #{partNo}, #{custCode}, #{inIlno}, #{startDate}, #{endDate}) as getout0120;
+    </select>
+    
+</mapper>

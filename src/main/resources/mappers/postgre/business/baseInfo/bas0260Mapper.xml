@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.baseInfo.bas0260.dao.postgre.Bas0260Dao">
+
+	<!--  예비품 정보 GET -->
+	<select id="getMainList" parameterType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260Dto" resultType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260VO">        
+        SELECT row_number() over() as id,
+	 		   com_code,
+			   fac_code,
+			   fn_fac_nm(com_code, fac_code) as fac_name,
+			   job_type,
+			   part_no,
+			   part_name,
+			   spec,
+			   qty,
+			   safe_qty,
+			   grade,
+			   reg_date,
+			   unit,
+			   price,
+			   stock_code,
+			   spare_image,
+			   user_flag,
+			   make_date,
+			   fn_username(com_code, maker) as maker,
+			   edit_date,
+			   fn_username(com_code, editor) as editor
+	      FROM BAS0100
+	     WHERE com_code = #{comCode}
+	     <if test='facCode != null and !facCode.equals("")'>
+	       AND fac_code = #{facCode}
+	     </if>
+	     <if test='jobType != null and !jobType.equals("")'>
+	       AND job_type = #{jobType}
+	     </if>
+	     <if test='userFlag != null and !userFlag.equals("")'>
+	       AND user_flag = #{userFlag}
+	     </if>
+	     ORDER BY part_no
+    </select>
+    
+    <!--  예비품별 자원정보 GET -->
+	<select id="getDetailList" parameterType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260Dto" resultType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260DetailVO">        
+        SELECT row_number() over() as id,
+	 		   com_code
+             , fac_code
+             , job_type
+             , part_no
+             , eq_code
+             , user_flag
+             , make_date
+             , fn_username(com_code, maker) as maker
+             , edit_date
+             , fn_username(com_code, editor) as editor
+	      FROM BAS0101
+	     WHERE 1=1	     
+	     <if test='comCode != null and !comCode.equals("")'>
+	       AND com_code = #{comCode}
+	     </if>
+	     <if test='facCode != null and !facCode.equals("")'>
+	       AND fac_code = #{facCode}
+	     </if>
+	     <if test='partNo != null and !partNo.equals("")'>
+	       AND part_no = #{partNo}
+	     </if>
+    </select>
+    
+    <!-- 예비품 정보 Create -->
+    <insert id="ctReserveStockInfo" parameterType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260VO">
+    	INSERT INTO bas0100
+		(
+			  com_code
+			, fac_code
+			, job_type
+			, part_no
+			, part_name
+			, spec
+			, qty
+			, safe_qty
+			, grade
+			, reg_date
+			, unit
+			, price
+			, stock_code
+			, spare_image
+			, user_flag
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{jobType}
+			, #{partNo}
+			, #{partName}
+			, #{spec}
+			, #{qty}
+			, #{safeQty}
+			, #{grade}
+			, #{regDate}
+			, #{unit}
+			, #{price}
+			, #{stockCode}
+			, #{spareImage}
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)     
+    </insert>
+    
+    <!-- 예비품 정보 Update -->
+    <update id="utReserveStockInfo" parameterType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260VO">
+    	UPDATE bas0100
+		   SET job_type     = #{jobType}
+             , part_name    = #{partName}
+             , spec         = #{spec}
+             , qty          = #{qty}
+             , safe_qty     = #{safeQty}
+             , grade        = #{grade}
+             , reg_date     = #{regDate}
+             , unit         = #{unit}
+             , price        = #{price}
+             , stock_code   = #{stockCode}
+             , spare_image  = #{spareImage}
+             , user_flag    = #{userFlag}
+             , edit_date    = now()
+             , editor       = #{editor}
+		 WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode} 
+		   AND part_no  = #{partNo} 
+    </update>
+    
+    <!-- 예비품별 자원정보 Create -->
+    <insert id="ctReserveStockDetailInfo" parameterType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260DetailVO">
+    	INSERT INTO bas0101
+		(
+			  com_code
+            , fac_code
+            , job_type
+            , part_no
+            , eq_code
+            , user_flag
+            , make_date
+            , maker
+		)
+		VALUES
+		(
+			  #{comCode}
+            , #{facCode}
+            , #{jobType}
+            , #{partNo}
+            , #{eqCode}
+            , #{userFlag}
+            , now()
+            , #{maker}
+		)     
+    </insert>
+    
+    <!-- 예비품별 자원정보 Update -->
+    <update id="utReserveStockDetailInfo" parameterType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260DetailVO">
+    	UPDATE bas0101
+		   SET job_type   = #{jobType}
+             , user_flag  = #{userFlag}
+             , edit_date  = now()
+             , editor     = #{editor}
+		 WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode}
+		   AND part_no  = #{partNo}
+		   AND eq_code  = #{eqCode}
+    </update>
+    
+    <!-- 예비품정보 delete -->
+    <delete id="deleteReserveStockInfo" parameterType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260VO">
+	   	delete from bas0100
+	   	 where com_code = #{comCode}
+	  	   and fac_code = #{facCode} 
+	  	   and part_no  = #{partNo};
+	  	  
+	  	delete from bas0101
+	  	 where com_code = #{comCode}
+	  	   and fac_code = #{facCode}
+	  	   and part_no  = #{partNo};
+    </delete>
+    
+    <!-- 예비품별 자원정보 delete -->
+    <delete id="deleteReserveStockDetailInfo" parameterType="kr.co.igns.business.baseInfo.bas0260.model.Bas0260DetailVO">
+	  	delete from bas0101
+	  	 where com_code = #{comCode}
+	  	   and fac_code = #{facCode}
+	  	   and part_no  = #{partNo}
+	  	   and eq_code  = #{eqCode};
+    </delete> 
+    
+</mapper>

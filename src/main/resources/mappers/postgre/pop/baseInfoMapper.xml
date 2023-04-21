@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.baseInfoDao">
+	<select id="getBas0034" parameterType="kr.co.igns.business.pop.model.baseInfo.bas0034ReqDto" resultType="kr.co.igns.business.pop.model.baseInfo.commonVO" >
+		select work_code as code, work_name as codeName
+		from bas0034
+		where com_code = #{comCode}
+		and fac_code = #{facCode}
+	</select>
+	
+	<select id="getBas0035" parameterType="kr.co.igns.business.pop.model.baseInfo.bas0034ReqDto" resultType="kr.co.igns.business.pop.model.baseInfo.commonVO" >
+		select work_code as workCode, fn_workname(com_code , fac_code ,work_code) as workName, work_decode as code, work_dename as codeName
+		from bas0035
+		where com_code = #{comCode}
+		and fac_code = #{facCode}
+		<!-- and work_code = #{workCode} -->
+	</select>
+
+	<select id="getPro0010" parameterType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050ReqDto" resultType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050VO" >
+		select com_code as comCode, fac_code facCode, work_no as workNo, plan_date as planDate, work_date as workDate, work_code as workCode,
+			   work_decode as workDecode, order_state as orderState, pri_code as priCode, path_code as pathCode, work_crew as workCrew,
+			   part_no as partNo, order_qty as orderQty, lot_no as lotNo, remark, plan_no as planNo
+		from pro0010
+		where com_code = #{comCode}
+		and fac_code = #{facCode}
+		<if test="planDate != null and planDate !=''">
+			and plan_date = #{planDate}
+		</if>
+		<if test="workCrew != null and workCrew !=''">
+			and work_crew = #{workCrew}
+		</if>
+		order_state = '20'
+	</select>
+	
+	<select id="getWorkerList" parameterType="kr.co.igns.business.pop.model.Pro0021ReqDto" resultType="kr.co.igns.business.pop.model.baseInfo.PopupWorkerListVO">
+	  select dep_code depCode, user_id userId, user_name userName, 
+         DENSE_RANK() over(order by dep_code) as idx
+      from bas0022
+      where com_code = #{comCode}
+	</select>
+</mapper>

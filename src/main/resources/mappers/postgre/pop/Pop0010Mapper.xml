@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0010Dao">
+	
+	
+	<!-- 입고번호로 납품정보 상세 조회 -->
+	<select id="getMat0018" parameterType="kr.co.igns.business.pop.model.Pop0010ReqDto" resultType="kr.co.igns.business.pop.model.Pop0010VO" >
+		select * from mat0018 a
+		  join mat0012 b on a.com_code = b.com_code and a.ilno = b.ilno and a.no = b.no
+		  join mat0010 c on a.com_code = c.com_code and b.ord_no = c.ord_no
+		  join bas0040 d on a.com_code = d.com_code and a.part_no = d.part_no 
+		 where 1=1
+		   and a.com_code = #{comCode}
+		   and c.cust_code = #{custCode}
+		   and a.ilno      = #{ilno}
+		   and b.in_status = '10'
+		   and a.scan_yn = 'N'
+	  order by a.lot_detail	
+	</select>
+	
+	<!-- 전표스캔으로 납품정보 상세 조회 -->
+	<select id="getMat0018_Scan" parameterType="kr.co.igns.business.pop.model.Pop0010ReqDto" resultType="kr.co.igns.business.pop.model.Pop0010VO" >
+		select * from mat0018 a
+		  join mat0012 b on a.com_code = b.com_code and a.ilno = b.ilno and a.no = b.no
+		  join mat0010 c on a.com_code = c.com_code and b.ord_no = c.ord_no
+		  join bas0040 d on a.com_code = d.com_code and a.part_no = d.part_no 
+		 where 1=1
+		   and a.com_code = #{comCode}
+		   and a.ilno      = #{ilno}
+		   and b.in_status = '10'
+		   and a.scan_yn = 'N'
+	  order by a.lot_detail	          
+	</select>
+	
+	<!-- 전산번호 스캔으로 납품정보 상세 조회 -->
+	<select id="getMat0018_LotScan" parameterType="kr.co.igns.business.pop.model.Pop0010ReqDto" resultType="kr.co.igns.business.pop.model.Pop0010VO" >
+		select * from mat0018 a
+		  join mat0012 b on a.com_code = b.com_code and a.ilno = b.ilno and a.no = b.no
+		  join mat0010 c on a.com_code = c.com_code and b.ord_no = c.ord_no
+		  join bas0040 d on a.com_code = d.com_code and a.part_no = d.part_no 
+		 where 1=1
+		   and a.com_code = #{comCode}
+		   and a.ilno      = #{ilno}
+		   and b.in_status = '10'
+		   and a.scan_yn = 'N'
+		   and a.lot_detail = #{lotDetail}
+	</select>
+	
+	<!-- 입고상태 조회 -->
+	<select id="getInStatus" parameterType="kr.co.igns.business.pop.model.Pop0010ReqDto" resultType="String" >
+		  select c.in_insp from mat0018 a
+		  join mat0012 b on a.com_code = b.com_code and a.ord_no = b.ord_no and a.part_no = b.part_no and a.ilno = b.ilno and a.no = b.no 
+		  join bas0040 c on a.com_code = c.com_code and a.part_no = c.part_no
+		  where a.com_code = #{comCode}
+		    and a.part_no = #{partNo}
+		    and a.lot_detail = #{lotDetail}    
+	</select>
+	
+	<!-- 입고처에 따른 입고번호 조회 -->
+	<select id="getIlno" parameterType="kr.co.igns.business.pop.model.Pop0010ReqDto" resultType="kr.co.igns.business.pop.model.Pop0010VO" >
+		select a.ilno, c.cust_code from mat0018 a
+		  join mat0012 b on a.com_code = b.com_code and a.ilno = b.ilno and a.no = b.no
+		  join mat0010 c on a.com_code = c.com_code and b.ord_no = c.ord_no 
+		  where a.com_code = #{comCode}
+		    and b.in_status = '10'
+		    and c.cust_code = #{custCode}
+		    group by a.ilno, c.cust_code 
+		  order by a.ilno
+	</select>
+
+    <update id="updateMat0012" parameterType="kr.co.igns.business.pop.model.Pop0010VO">
+		do $$
+			declare 
+				scan_cnt integer := 0;
+			begin
+			
+			    update mat0018 
+			       set scan_yn = 'Y'
+			     where com_code = '${comCode}'
+			       and ord_no = '${ordNo}'
+			       and no = '${no}'
+			       and lot_detail = '${lotDetail}';
+	       
+				select count(*)
+				 into scan_cnt 
+				  from mat0018 
+				where com_code = '${comCode}'
+				  and fac_code = '${facCode}'
+				  and ilno = '${ilno}'
+				  and scan_yn = 'N';
+
+			if scan_cnt = 0 then
+				update mat0012
+				   set in_status = '${inStatus}'
+		   		     , edit_date = now()
+				     , editor	 = '${editor}'
+				 where com_code = '${comCode}'
+				   and ilno = '${ilno}';
+			end if;	
+		end $$;
+    </update>
+
+    <!-- 구매 발주정보 상세 수정 -->
+    <update id="updateMat0011" parameterType="kr.co.igns.business.pop.model.Pop0010VO">
+		update mat0011
+		   set in_qty		= (in_qty::integer + #{qty}::integer)::text
+			 , wait_qty		= (wait_qty::integer - #{qty}::integer)::text
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and ord_no	= #{ordNo}
+		  and no		= #{no}
+    </update>
+    
+	<select id="getLocCode" parameterType="kr.co.igns.business.pop.model.Pop0010ReqDto" resultType="String" >
+		select in_wh from bas0040  
+		 where part_no  in (select part_no from mat0012
+		  					 where com_code = #{comCode}
+		  					   and part_no = #{partNo})
+	</select>
+	
+	<!-- 입고 대기 유무 N으로 변경 -->
+    <update id="updateMat0018" parameterType="kr.co.igns.business.pop.model.Pop0010VO">
+	    update mat0018 
+	       set in_insp_yn = 'N'
+	     where com_code = #{comCode}
+	       and ord_no = #{ordNo}
+	       and no = #{no}
+	       and lot_detail = #{lotDetail}
+    </update>
+	
+    <insert id="updateMat0020" parameterType="kr.co.igns.business.pop.model.Pop0010VO">
+    	insert into mat0020 as mat
+		(
+			  com_code
+			, fac_code
+			, loc_code
+			, part_no
+			, stock_qty
+			, stock_amount
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{locCode}
+			, #{partNo}
+			, #{qty}
+			, #{stockAmount}
+			, now()
+			, #{maker}
+		)
+		ON CONFLICT ON  CONSTRAINT
+			mat0020_pk
+		DO UPDATE SET
+			stock_qty = (mat.stock_qty::integer + #{qty}::integer)::text
+		  , stock_amount = (mat.stock_amount::integer + #{stockAmount}::integer)::text
+		  , edit_date = now()
+		  , editor = #{maker}
+			
+    </insert>
+    
+        <select id="getPrice" parameterType="kr.co.igns.business.pop.model.Pop0010VO"
+    					resultType="Int">
+		select price 
+		from bas0045 
+		where com_code = #{comCode}
+		  and part_no = #{partNo}
+		  and cust_code = #{custCode}
+		  and app_yn = 'Y'
+    </select>  
+
+    <insert id="createMat0021" parameterType="kr.co.igns.business.pop.model.Pop0010VO">
+    	insert into mat0021
+		(
+			  com_code
+			, fac_code
+			, loc_code
+			, stock_type
+			, event_cd
+			, part_no
+			, stock_qty
+			, stock_amount
+			, regi_date
+			, lot_no
+			, lot_detail
+			, user_flag
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{inWh}
+			, #{partType}
+			, '10'
+			, #{partNo}
+			, #{qty}
+			, #{stockAmount}
+			, #{regiDate}
+			, (to_char(now(), 'YYMMDD'))
+			, #{lotDetail}
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+
+</mapper>

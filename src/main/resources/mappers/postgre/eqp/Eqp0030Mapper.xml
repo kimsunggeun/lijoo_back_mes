@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.eqp.dao.postgre.Eqp0030Dao">
+        
+
+    <select id="getEqp0030" parameterType="kr.co.igns.business.eqp.model.eqp0030.Eqp0030Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0030.Eqp0030VO">
+	
+	select* 
+	from  bas0036 
+<where>
+			
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND fac_code = #{facCode}					
+				]]>
+			</if>
+			
+			<if test="eqCode != null and eqCode != ''">
+				<![CDATA[
+					AND eq_code = #{eqCode}
+				]]>
+			</if>
+		</where>
+    </select>   
+    
+    <!-- 
+    <select id="getEqp0030Detail" parameterType="kr.co.igns.business.eqp.model.eqp0030.Eqp0030Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0030.Eqp0030DetailVO">
+	select 
+	a.com_code, a.fac_code, b.insp_date, a.eq_ins_type, a.eq_code, a.eq_insp_no, 
+    a.eq_ins_code, a.ins_type, a.ins_meth, 
+    a.jug_code, a.ins_unit, a.ins_base,
+    a.ins_upp ,a.ins_low ,a.jug_code,b.judge ,b.mea_value, 
+    b.remark,a.make_date ,a.maker ,a.edit_date ,a.editor 
+	from eqp0031 as a 
+	inner JOIN eqp0032 AS b ON a.com_code = b.com_code 
+	                  and a.fac_code = b.fac_code 
+	                  and a.eq_ins_type = b.eq_ins_type 
+	                  and a.eq_ins_code = b.eq_ins_code
+	                  and a.eq_insp_no = b.eq_insp_no
+	                  and a.eq_code = b.eq_code
+	                 
+			<where>
+			
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND a.com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND a.fac_code = #{facCode}					
+				]]>
+			</if>
+			<if test="eqCode != null and eqCode != ''">
+				<![CDATA[
+					AND a.eq_code = #{eqCode}
+				]]>
+			</if>
+			<if test="eqInsType != null and eqInsType != ''" >
+				<![CDATA[
+					AND a.eq_ins_type = #{eqInsType}
+				]]>
+			</if>
+			
+			<if test="eqInsCode != null and eqInsCode != ''">
+				<![CDATA[
+					AND a.eq_ins_code = #{eqInsCode}
+				]]>
+			</if>
+			
+					and a.user_flag = 'Y'
+		
+		</where>
+
+    </select>  -->
+    <select id="getEqp0030Detail" parameterType="kr.co.igns.business.eqp.model.eqp0030.Eqp0030Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0030.Eqp0030DetailVO">
+	select 
+	a.com_code, a.fac_code, a.insp_date, a.eq_ins_type, a.eq_code, a.eq_insp_no, 
+    a.eq_ins_code, a.ins_type, a.ins_meth, 
+    a.jug_code, a.ins_unit, a.ins_base,
+    a.ins_upp ,a.ins_low ,a.jug_code,a.judge ,a.mea_value, 
+    a.remark,a.make_date ,a.maker ,a.edit_date ,a.editor 
+	from  eqp0032 a
+	                 
+			<where>
+			
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND a.com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND a.fac_code = #{facCode}					
+				]]>
+			</if>
+			<if test="inspDate != null and inspDate != ''">
+				<![CDATA[
+					AND a.insp_date = #{inspDate}					
+				]]>
+			</if>
+			<if test="eqInsType != null and eqInsType != ''" >
+				<![CDATA[
+					AND a.eq_ins_type = #{eqInsType}
+				]]>
+			</if>
+			<if test="eqCode != null and eqCode != ''">
+				<![CDATA[
+					AND a.eq_code = #{eqCode}
+				]]>
+			</if>
+			<if test="eqInspNo != null and eqInspNo != ''">
+				<![CDATA[
+					AND a.e_insp_no = #{eqInspNo}					
+				]]>
+			</if>
+			<if test="eqInsCode != null and eqInsCode != ''">
+				<![CDATA[
+					AND a.eq_ins_code = #{eqInsCode}
+				]]>
+			</if>
+			
+		
+		</where>
+
+    </select>   
+    
+   
+    <insert id="createEqp0030" 
+			parameterType="kr.co.igns.business.eqp.model.eqp0030.Eqp0030DetailVO">
+	  	
+		<![CDATA[
+		insert into eqp0032
+			(com_code, fac_code, insp_date, 
+			eq_ins_type, eq_code, eq_insp_no,
+			eq_ins_code, ins_type, ins_meth,
+			jug_code, ins_unit, ins_base, 
+			ins_upp, ins_low, judge,
+			mea_value, remark,  
+			make_date, maker
+				
+			)
+			values
+			(
+				    #{comCode},#{facCode},#{inspDate}, 
+					#{eqInsType}, #{eqCode}, #{eqInspNo}, 
+					#{eqInsCode}, #{insType}, #{insMeth}, #{jugCode}, 
+					#{insUnit}, #{insBase}, #{insUpp}, #{insLow},
+					#{judge}, #{meaValue}, #{remark},
+					 now(), #{editor}
+			)
+			on conflict (com_code, fac_code, insp_date, 
+						 eq_ins_type, eq_code, eq_insp_no,
+						 eq_ins_code) 
+			do update set
+			
+			    remark=#{remark},
+			    mea_value =#{meaValue},
+			    judge=#{judge},
+			    edit_date = now(), editor = #{editor};
+		
+		]]>
+	</insert>
+    
+    
+    <delete id="deleteEqp0030" parameterType="kr.co.igns.business.eqp.model.eqp0030.Eqp0030DetailVO">
+		DELETE FROM public.eqp0032 as a
+	<where>
+			
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND a.com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND a.fac_code = #{facCode}					
+				]]>
+			</if>
+			<if test="inspDate != null and inspDate != ''">
+				<![CDATA[
+					AND a.insp_date = #{inspDate}
+				]]>
+			</if>
+			<if test="eqInsType != null and eqInsType != ''" >
+				<![CDATA[
+					AND a.eq_ins_type = #{eqInsType}
+				]]>
+			</if>
+			<if test="eqCode != null and eqCode != ''">
+				<![CDATA[
+					AND a.eq_code = #{eqCode}
+				]]>
+			</if>
+			<if test="eqInspNo != null and eqInspNo != ''">
+				<![CDATA[
+					AND a.eq_insp_no = #{eqInspNo}
+				]]>
+			</if>
+			<if test="eqInsCode != null and eqInsCode != ''">
+				<![CDATA[
+					AND a.eq_ins_code = #{eqInsCode}
+				]]>
+			</if>
+		</where>
+    
+    </delete>
+    
+    
+    
+
+     
+</mapper>

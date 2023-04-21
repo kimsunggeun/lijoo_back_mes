@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0270Dao">
+	 <select id="getMat0270" parameterType="kr.co.igns.business.mat.model.mat0270.Mat0270ReqDto"	resultType="kr.co.igns.business.mat.model.mat0270.Mat0270VO">
+			select fn_compnm(m0030.com_code) as com_name
+				 , fn_fac_nm(m0030.com_code, m0030.fac_code) as fac_name
+				 , m0030.ret_date 
+				 , m0030.ilno 
+				 , m0012.regi_date
+				 , m0012.in_type 
+			     , m0012.part_no
+			     , fn_partname(m0030.com_code, m0012.part_no) as part_name
+			     , m0030.lot_no
+			     , m0030.lot_detail 
+			     , m0030.ret_code 
+			     , m0012.in_qty
+			     , m0030.ret_qty
+			     , m0030.ret_amount
+			     , m0030.remark
+			     , m0030.make_date
+			     , m0030.maker 
+			     , m0030.edit_date
+			     , m0030.editor 
+			from mat0030 AS m0030
+    		join mat0012 AS m0012 on m0030.com_code = m0012.com_code and m0012.ord_no = m0030.ord_no AND m0012.no = m0030.no AND m0012.ilno = m0030.ilno
+				<![CDATA[
+				   where m0030.com_code = #{comCode}					
+				]]>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND m0030.fac_code = #{facCode}
+				]]>
+			</if>
+				<![CDATA[
+					AND m0030.ret_date between #{workFrDate} and #{workDate}
+				]]>
+			<if test="inType != null and inType != ''">
+				<![CDATA[
+					AND m0012.in_type = #{inType}
+				]]>
+			</if>			
+	</select>
+</mapper>

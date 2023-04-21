@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.CmCodeDao">
+        
+    <!-- 공통코드 검색 조건   -->    
+    <sql id="search">
+		<if test='codegr != null and !codegr.equals("")'>
+			and a.codegr  in( select unnest(string_to_array(#{codegr},',')) )
+		</if>
+		<if test='code != null and !code.equals("")'>
+			and a.code  in( select unnest(string_to_array(#{code},',')) )
+		</if>
+		<if test='sysCode != null and !sysCode.equals("")'>
+			and a.sys_code = #{sysCode}
+		</if>
+		<if test='userFlag != null and !userFlag.equals("")'>
+				and a.user_flag  in( select unnest(string_to_array(#{userFlag},',')) )
+		</if>
+	</sql>
+	
+    <!-- 공통코드 조회 -->
+    <select id="getCmCode" parameterType="kr.co.igns.framework.comm.model.CmCodeReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.CmCodeVO">
+        select	row_number() over() as id, a.*
+		from 	bas0010 a
+		where 	a.com_code = #{comCode}
+		  <include refid="search" />
+		order by a.codegr, a.code
+    </select>
+    
+    <insert id="createCmCode" parameterType="kr.co.igns.framework.comm.model.CmCodeVO">
+    	insert into bas0010
+			(com_code
+			, codegr
+			, code
+			, code_name
+			, user_flag
+			, make_date
+			, maker
+			)
+		values(
+			#{comCode}
+			, #{codegr}
+			, #{code}
+			, #{codeName}
+			, #{userFlag}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <update id="updateCmCode" parameterType="kr.co.igns.framework.comm.model.CmCodeVO">
+    	update 	bas0010
+		set 	code_name 	= #{codeName}
+				, user_flag	= #{userFlag}
+				, edit_date	= now()
+				, editor	= #{editor}
+		where 	com_code	= #{comCode}
+		and 	codegr 		= #{codegr} 
+		and 	code 		= #{code}
+				
+    </update>
+
+    <!-- 공통코드 상세 조회 -->
+    <select id="getCmChildCode" parameterType="kr.co.igns.framework.comm.model.CmCodeReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.CmChildCodeVO">
+		select 	row_number() over() as id, a.*
+		from 	bas0011 a
+		where 	a.com_code = #{comCode}
+		<include refid="search" />
+		order by sort_flag::INTEGER;
+    </select>
+    
+    <insert id="createCmChildCode" parameterType="kr.co.igns.framework.comm.model.CmChildCodeVO">
+    	insert into bas0011
+			(com_code
+			, codegr
+			, code
+			, sys_code
+			, sys_name
+			, sort_flag
+			, user_flag
+			, make_date
+			, maker
+			)
+		values(
+			#{comCode}
+			,#{codegr}
+			,#{code}
+			,#{sysCode}
+			,#{sysName}
+			,#{sortFlag}
+			,#{userFlag}
+			,now()
+			,#{maker}
+			)
+    </insert>
+    
+    <update id="updateCmChildCode" parameterType="kr.co.igns.framework.comm.model.CmChildCodeVO">
+    	update 	bas0011 
+		set 	 sys_name 	= #{sysName}
+				, sort_flag	= #{sortFlag}
+				, user_flag	= #{userFlag}
+				, edit_date	= now()
+				, editor	= #{editor}
+		where 	com_code	= #{comCode}
+		and 	codegr 		= #{codegr} 
+		and 	code 		= #{code}
+		and 	sys_code	= #{sysCode}
+				
+    </update>
+    
+    <delete id="deleteCmCode" parameterType="kr.co.igns.framework.comm.model.CmCodeReqDto">
+	    DELETE FROM bas0010
+		WHERE com_code = #{comCode} 
+		AND codegr = #{codegr} 
+		AND code = #{code};
+		
+		DELETE FROM bas0011
+		WHERE com_code = #{comCode} 
+		AND codegr = #{codegr} 
+		AND code = #{code};
+		
+    </delete>
+    <delete id="deleteCmChildCode" parameterType="kr.co.igns.framework.comm.model.CmCodeReqDto">
+    	DELETE FROM bas0011
+		WHERE com_code = #{comCode} 
+		AND codegr = #{codegr} 
+		AND code = #{code}
+		AND sys_code = #{sysCode};
+    </delete>
+    
+
+
+</mapper>

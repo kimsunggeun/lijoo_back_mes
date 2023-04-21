@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0040Dao">
+	
+		<!-- 출고창고 조회 -->
+	<select id="getOutWh" parameterType="kr.co.igns.business.pop.model.Pop0040ReqDto" resultType="kr.co.igns.business.pop.model.Pop0040VO" >
+		 select loc_code
+		 	  , loc_name 
+		  from bas0033
+		  where com_code = #{comCode}
+		    order by wh_code, loc_code
+	</select>
+
+		<!-- 품번, 품명 조회 -->
+	<select id="getPartNo" parameterType="kr.co.igns.business.pop.model.Pop0040ReqDto" resultType="kr.co.igns.business.pop.model.Pop0040VO" >
+		select part_no
+			 , part_name
+			 , spec
+			 , lot_size
+		  from bas0040
+		where com_code = #{comCode}
+	</select>
+	
+	<!-- 입고번호로 납품정보 상세 조회 -->
+	<select id="getMat0021" parameterType="kr.co.igns.business.pop.model.Pop0040ReqDto" resultType="kr.co.igns.business.pop.model.Pop0040VO" >
+		select row_number() over(order by lot_detail, part_no) as id
+			 , * 
+		  from mat0021 a
+		where com_code = #{comCode}
+  		  and loc_code = #{locCode}
+		  <if test = 'partNo != null and !partNo.equals("")' >
+  		  	and part_no LIKE CONCAT(#{partNo})
+		  </if>
+	</select>
+	
+    <update id="updateMat0020" parameterType="kr.co.igns.business.mat.model.mat0040.Mat0013VO">
+		update mat0020
+		   set stock_qty 	= (stock_qty::integer - #{mat0020Qty}::integer)::text
+		     , stock_amount = (stock_amount::integer - #{mat0020Amount}::integer)::text
+		     , edit_date 	= now()
+		     , editor		= #{editor}
+		 where com_code = #{comCode}
+		   and fac_code = #{facCode}
+		   and part_no  = #{partNo}
+		   and loc_code = #{locCode}
+    </update>
+	
+    <insert id="createMat0020" parameterType="kr.co.igns.business.pop.model.Pop0040VO">
+    	insert into mat0020
+		(
+			  com_code
+			, fac_code
+			, loc_code
+			, part_no
+			, stock_qty
+			, stock_amount
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{newLocCode}
+			, #{partNo}
+			, #{mat0020Qty}
+			, #{mat0020Amount}
+			, now()
+			, #{maker}
+		)
+		on conflict on constraint 
+		mat0020_pk
+		do update set
+			stock_qty = (mat0020.stock_qty::Integer + #{mat0020Qty}::Integer)::varchar
+		  , stock_amount = (mat0020.stock_amount::Integer + #{mat0020Amount}::Integer)::varchar
+		  , edit_date = current_date
+		  , editor = #{maker}
+    </insert>
+	
+    <delete id="deleteMat0021" parameterType="kr.co.igns.business.pop.model.Pop0040VO">
+		delete from mat0021
+		 where com_code = #{comCode}
+		   and fac_code = #{facCode}
+		   and part_no = #{partNo}
+		   and regi_date = #{regiDate}
+		   and lot_detail = #{lotDetail}
+		   and loc_code = #{locCode}
+    </delete>  
+    
+    <insert id="createMat0021" parameterType="kr.co.igns.business.pop.model.Pop0040VO">
+    	insert into mat0021
+		(
+			  com_code
+			, fac_code
+			, loc_code
+			, stock_type
+			, event_cd
+			, part_no
+			, stock_qty
+			, stock_amount
+			, regi_date
+			, lot_no
+			, lot_detail
+			, user_flag
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{newLocCode}
+			, #{stockType}
+			, '10'
+			, #{partNo}
+			, #{stockQty}
+			, #{stockAmount}
+			, #{regiDate}
+			, (to_char(now(), 'YYMMDD'))
+			, #{lotDetail}
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+
+    <insert id="createMat0031" parameterType="kr.co.igns.business.pop.model.Pop0040VO">
+    	insert into mat0031
+		(
+			com_code,
+			fac_code,
+			move_date,
+			part_no,
+			lot_no,
+			lot_detail,
+			no,
+			stock_qty,
+			stock_amount,
+			loc_code,
+			move_loc_code,
+			make_date,
+			maker,
+			edit_date,
+			editor
+		)
+		values
+		(
+			#{comCode},
+			#{facCode},
+			to_char(Now(), 'yyyy-mm-dd'),
+			#{partNo},
+			#{lotNo},
+			#{lotDetail},
+			(
+				select (coalesce(max(no::integer),0) +1)::text
+			      from mat0031
+			    where to_char(make_date,'yyyy-mm-dd') = to_char(now(), 'yyyy-mm-dd')
+		    ),
+			#{stockQty},
+			#{stockAmount},
+			#{locCode},
+			#{inWh},
+			Now(),
+			#{maker},
+			null,
+			null
+		)
+
+    </insert>
+
+
+</mapper>

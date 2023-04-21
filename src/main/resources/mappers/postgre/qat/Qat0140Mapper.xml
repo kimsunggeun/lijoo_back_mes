@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Qat0140Dao">
+        
+	<!-- 반품등록 조회 -->
+    <select id="getQat0140" parameterType="kr.co.igns.business.qat.model.qat0140.Qat0140ReqDto" 
+    					resultType="kr.co.igns.business.qat.model.qat0140.Qat0140VO">
+        select row_number() over(order by a.ord_no, a.ilno, a.no) as id, a.*
+		from sal0140 a
+		where a.com_code= #{comCode}
+		  and a.fac_code= #{facCode}
+		  and a.ord_no= #{ordNo}
+		  and a.ilno= #{ilno}
+		  and a.no= #{no}
+		  and a.ret_lot_detail= #{retLotDetail}
+    </select>
+    
+    <insert id="createQat0140" parameterType="kr.co.igns.business.qat.model.qat0140.Qat0140VO">
+    	insert into sal0140
+		(
+			  com_code
+			, fac_code
+			, ord_no
+			, ilno
+			, no
+			, lot_no
+			, lot_detail
+			, ret_lot_no
+			, ret_lot_detail
+			, ret_code
+			, ret_type
+			, wh_code
+			, part_no
+			, ret_qty
+			, remark
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{ordNo}
+			, #{ilno}
+			, #{no}
+			, #{lotNo}
+			, #{lotDetail}
+			, #{retLotNo}
+			, #{retLotDetail}
+			, #{retCode}
+			, #{retType}
+			, #{whCode}
+			, #{partNo}
+			, #{retQty}
+			, #{remark}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <update id="updateQat0140" parameterType="kr.co.igns.business.qat.model.qat0140.Qat0140VO">
+    	update sal0140
+			set lot_no = #{lotNo}
+			  , lot_detail = #{lotDetail}
+			  , ret_lot_no = #{retLotNo}
+			  , ret_code = #{retCode}
+			  , ret_type = #{retType}
+			  , wh_code = #{whCode}
+			  , part_no = #{partNo}
+			  , ret_qty = #{retQty}
+			  , remark = #{remark}
+			  , edit_date= now()
+			  , editor= #{editor}
+			where com_code= #{comCode}
+			  and fac_code= #{facCode}
+			  and ord_no= #{ordNo}
+			  and ilno= #{ilno}
+			  and no= #{no}
+			  and ret_lot_detail= #{retLotDetail}
+    </update>
+</mapper>

@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.out.dao.postgre.Out0010Dao">
+   
+	<!-- 외주업체 확인 -->
+    <select id="getUserId" parameterType="kr.co.igns.business.out.model.out0010.Out0010ReqDto" 
+    					resultType="kr.co.igns.business.out.model.out0010.Out0010VO">
+		select b.dep_code from bas0022 a
+		join bas0021 b on a.com_code = b.com_code and a.dep_code = b.dep_code 
+		where a.com_code = #{comCode}
+		  and a.user_id = #{userId}
+    </select>  
+
+   
+	<!-- 거래처 조회 -->
+    <select id="getAccount_out0010" parameterType="kr.co.igns.business.out.model.out0010.Out0010ReqDto" 
+    					resultType="kr.co.igns.business.out.model.out0010.Out0010VO">
+		select cust_code, cust_name  from bas0023 a
+		join bas0022 b on a.com_code = b.com_code
+		where a.com_code = #{comCode}
+		  and b.user_id = a.cust_code
+    </select> 
+    
+	<!-- 거래처 조회 -->
+    <select id="getAccount" parameterType="kr.co.igns.business.out.model.out0010.Out0010ReqDto" 
+    					resultType="kr.co.igns.business.out.model.out0010.Out0010VO">
+           select a.*
+		from bas0023 a
+		where a.com_code = #{comCode}
+		order by a.cust_code
+    </select> 
+
+    <!-- 입고량 만큼 납품대기로 이동 -->
+    <update id="updateMat0011" parameterType="kr.co.igns.business.mat.model.mat0030.Mat0012VO">
+		update mat0011
+		   set wait_qty		= (wait_qty::integer + #{qty}::integer)::text
+			 , rem_qty		= (rem_qty::integer - #{qty}::integer)::text
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and ord_no	= #{ordNo}
+		  and no		= #{no}
+    </update>
+
+   <insert id="createMat0012" parameterType="kr.co.igns.business.out.model.out0010.Out0010VO">
+    	insert into mat0012
+    	(
+    		  com_code
+			, fac_code
+			, ord_no
+			, no
+			, regi_date
+			, ilno
+			, part_no
+			, qty
+			, in_qty
+			, make_qty
+			, box_qty
+			, in_price
+			, in_amount
+			, rem_qty
+			, remark
+			, print_type
+			, user_flag
+			, make_date
+			, maker
+			, in_status
+			, in_type
+			, loc_code
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{ordNo}
+			, #{no}
+			, #{regiDate}
+			, #{ilNo}
+			, #{partNo}
+			, #{qty}
+			, #{inQty}
+			, #{makeQty}
+			, #{boxQty}
+			, #{inPrice}
+			, #{inAmount}
+			, #{remQty}
+			, #{remark}
+			, #{printType}
+			, #{userFlag}
+			, now()
+			, #{maker}
+			, #{inStatus}
+			, '30'			
+			, #{inWh}
+		)
+    </insert>
+    
+    <insert id="createMat0018" parameterType="kr.co.igns.business.out.model.out0010.Out0010VO">
+   	  	<selectKey keyProperty="maxLotDetail" resultType="string" order="BEFORE">
+   			select case when MAX(lot_detail) is null
+		         			then 'INC' || right(replace(#{regiDate}, '-', ''), 6) || '0001'
+		         		else 'INC' || right(replace(#{regiDate}, '-', ''), 6) || lpad((right(MAX(lot_detail), 4)::integer + 1)::text, 4, '0')
+		           end
+			from mat0018
+			where com_code = #{comCode}
+			  and fac_code = #{facCode}
+			  and regi_date = to_char(now(), 'YYYY-MM-DD')
+			   
+	  	</selectKey>
+    	
+    	insert into mat0018
+		(
+			  com_code
+			, fac_code
+			, ord_no
+			, no
+			, regi_date
+			, ilno
+			, serial_no
+			, part_no
+			, lot_no
+			, lot_detail
+			, qty
+			, supply_yn
+			, in_insp_yn
+			, remark
+			, print_type
+			, user_flag
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{ordNo}
+			, #{no}
+			, #{regiDate}
+			, #{ilNo}
+			, #{serialNo}
+			, #{partNo}
+			, (to_char(now(), 'YYMMDD'))
+			, #{maxLotDetail}
+			, #{qty}
+			, 'Y'
+			, 'Y'
+			, #{remark}
+			, #{printType}
+			, #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+
+    <select id="getIlNo" parameterType="kr.co.igns.business.out.model.out0010.Out0010VO" 
+    					resultType="String">
+   			select case when MAX(ilno) is null
+		         			then 'PA' || right(replace(#{regiDate}, '-', ''), 6) || '-0001'
+		         		else 'PA' || right(replace(#{regiDate}, '-', ''), 6) || '-' || lpad((right(MAX(ilno), 4)::integer + 1)::text, 4, '0')
+		           end
+			from mat0012
+			where com_code = #{comCode}
+			  and fac_code = #{facCode}
+			  and regi_date = #{regiDate}
+    </select>
+
+    <!-- 구매 발주정보 상세 업데이트 -->
+    <update id="updateMat0011_2" parameterType="kr.co.igns.business.mat.model.mat0030.Mat0018VO">
+		update mat0011
+		   set wait_qty		= (wait_qty::integer - #{qty}::integer)::text
+			 , rem_qty		= (rem_qty::integer + #{qty}::integer)::text
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and ord_no	= #{ordNo}
+		  and no		= #{no}
+    </update>
+    
+    <!-- 구매 발주정보 상세 업데이트 -->
+    <update id="updateMat0011_3" parameterType="kr.co.igns.business.mat.model.mat0030.Mat0018VO">
+		update mat0011
+		   set in_qty		= (in_qty::integer - #{qty}::integer)::text
+			 , rem_qty		= (rem_qty::integer + #{qty}::integer)::text
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and ord_no	= #{ordNo}
+		  and no		= #{no}
+    </update>
+    
+    <!-- 구매 입고정보  삭제 -->
+    <delete id="deleteMat0012" parameterType="kr.co.igns.business.mat.model.mat0030.Mat0018VO">
+	   	delete from mat0012
+	   	where com_code  = #{comCode}
+	  	  and fac_code  = #{facCode} 
+		  and ord_no    = #{ordNo}
+		  and no 	    = #{no}
+		  and regi_date = #{regiDate}
+		  and ilno		= #{ilNo}
+    </delete>  
+
+    <!-- 구매 입고정보 상세 삭제 -->
+    <delete id="deleteMat0018" parameterType="kr.co.igns.business.mat.model.mat0030.Mat0018VO">
+	   	delete from mat0018
+	   	where com_code  = #{comCode}
+	  	  and fac_code  = #{facCode} 
+		  and ord_no    = #{ordNo}
+		  and no 	    = #{no}
+		  and regi_date = #{regiDate}
+		  and ilno   	= #{ilNo}
+    </delete>  
+
+
+     
+	<!-- 공정외주발주등록 조회 -->
+    <select id="getOut0010" parameterType="kr.co.igns.business.out.model.out0010.Out0010ReqDto" 
+    						   resultType="kr.co.igns.business.out.model.out0010.Out0010VO">
+        select row_number() over(order by a.proc_no) as id, a.*
+		  from out0010 a
+	     where a.com_code  = #{comCode}
+	       and a.fac_code  = #{facCode} 
+		   and a.regi_date = #{regiDate}
+		   and a.ilno      = #{ilno}
+    </select>
+    
+    <insert id="createOut0010" parameterType="kr.co.igns.business.out.model.out0010.Out0010VO">
+    	insert into out0010
+			 ( com_code
+			 , fac_code
+			 , regi_date
+			 , exp_date
+			 , deli_date
+			 , ilno
+			 , ord_state
+			 , work_no
+			 , lot_no
+			 , cust_code
+			 , part_no
+			 , parh_code
+			 , proc_no
+			 , qty
+			 , in_qty
+			 , rem_qty
+			 , price
+			 , amount
+			 , remark
+			 , user_flag
+			 , make_date
+			 , maker
+			 )
+	   values( #{comCode}
+			 , #{facCode}
+			 , #{regiDate}
+			 , #{expDate}
+			 , #{deliDate}
+			 , #{ilno}
+			 , #{ordState}
+			 , #{workNo}
+			 , #{lotNo}
+             , #{custCode}
+             , #{partNo}
+             , #{parhCode}
+             , #{procNo}
+             , #{qty}
+             , #{inQty}
+             , #{remQty}
+             , #{price}
+             , #{amount}
+             , #{remark}
+             , #{userFlag}
+             , #{makeDate}
+             , #{maker}
+             )
+    </insert>
+    
+    <update id="updateOut0010" parameterType="kr.co.igns.business.out.model.out0010.Out0010VO">
+    	update out0010
+		   set exp_date   = #{expDate}
+			 , deli_date  = #{deliDate}
+			 , ord_state  = #{ordState}
+			 , work_no 	  = #{workNo}
+			 , lot_no     = #{lotNo}
+			 , cust_code  = #{custCode}
+			 , part_no    = #{partNo}
+			 , path_code  = #{pathCode}
+			 , proc_no    = #{procNo}
+			 , qty     	  = #{qty}
+			 , in_qty     = #{inQty}
+			 , rem_qty    = #{remQty}
+			 , amount     = #{amount}
+			 , remark     = #{remark}
+			 , user_flag  = #{userFlag}
+			 , edit_date  = now()
+			 , editor	  = #{editor}
+	 	 where com_code   = #{comCode}
+		   and fac_code   = #{facCode} 
+		   and regi_date  = #{regiDate}
+		   and ilno       = #{ilno}
+    </update>
+    
+    <update id="updateMat0020_2" parameterType="kr.co.igns.business.out.model.out0010.Out0010VO">
+		update mat0020
+		   set stock_qty 	= (stock_qty::integer - #{qty}::integer)::text
+		     , stock_amount = (stock_amount::integer - #{qty}::integer)::text
+		     , edit_date 	= now()
+		     , editor		= #{editor}
+		 where com_code = #{comCode}
+		   and fac_code = #{facCode}
+		   and part_no  = #{partNo}
+		   and loc_code = #{inWh}
+    </update>
+    
+    <delete id="deleteMat0021" parameterType="kr.co.igns.business.out.model.out0010.Out0010VO">
+		delete from mat0021
+		 where com_code = #{comCode}
+		   and fac_code = #{facCode}
+		   and part_no = #{partNo}
+		   and regi_date = #{regiDate}
+		   and lot_detail in (select lot_detail
+					          from mat0018
+					         where com_code = #{comCode}
+					           and fac_code = #{facCode}
+					           and ord_no = #{ordNo}
+					           and no = #{no}
+					           and part_no = #{partNo}
+					           and regi_date = #{regiDate}
+					           and ilno = #{ilNo})
+    </delete>  
+    
+    <delete id="deleteQat0010" parameterType="kr.co.igns.business.out.model.out0010.Out0010VO">
+    	 delete from qat0010
+		  where com_code = #{comCode}
+		    and fac_code = #{facCode}
+		    and ilno = #{ilNo}
+    </delete>
+</mapper>

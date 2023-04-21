@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Sal0230Dao">
+
+	<!-- 수주진행현황 조회 -->
+    <select id="getSal0230" parameterType="kr.co.igns.business.sales.model.sal0230.Sal0230ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0230.Sal0230VO">
+		select row_number() over(order by a.ret_date desc, a.ret_no) as id
+			 , a.com_code
+			 , a.fac_code
+			 , fn_compnm(a.com_code) as com_name
+			 , fn_fac_nm(a.com_code, a.fac_code) as fac_name
+			 , a.ilno
+			 , c.cust_code
+			 , b.part_no
+			 , d.part_name
+			 , a.lot_no
+			 , a.lot_detail
+			 , a.ret_no
+			 , a.ret_date
+			 , a.ret_lot_detail
+			 , a.ret_code
+			 , a.ret_type
+			 , a.loc_code
+			 , a.ret_qty
+			 , a.remark
+		  from sal0140 a
+		  join sal0120 b on b.com_code = a.com_code
+		  			 	and b.fac_code = a.fac_code
+		  			 	and b.ilno = a.ilno
+		  			 	and b.lot_detail = a.lot_detail
+		  join sal0010 c on c.com_code = a.com_code
+		  				and c.fac_code = a.fac_code
+		  				and c.ord_no = b.ord_no
+		  join bas0040 d on d.com_code = a.com_code
+		  				and d.part_no = b.part_no
+		<where>
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND a.com_code = #{comCode}
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND a.fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="custCode != null and custCode != ''">
+				<![CDATA[
+					AND c.cust_code = #{custCode}
+				]]>
+			</if>
+			<if test="partNm != null and partNm != ''">
+				<![CDATA[
+					AND upper(d.part_name) like '%' || upper(#{partNm}) || '%'
+				]]>
+			</if>
+			<if test="workFrDate != null and workFrDate != '' and workDate != null and workDate != ''" >
+				<![CDATA[
+					AND a.ret_date between #{workFrDate} and #{workDate}
+				]]>
+			</if>
+		</where>
+    </select>
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0110Dao">
+
+    <!-- 작업지시 진행현황 -->
+    <select id="getPro0110" parameterType="kr.co.igns.business.ProdManage.model.pro0110.Pro0110ReqDto" 
+    						resultType="kr.co.igns.business.ProdManage.model.pro0110.Pro0110VO">
+		select a.com_code as comCode, a.fac_code as facCode, a.plan_date as planDate,
+				fn_comcodenm(a.com_code,'WORK_CREW', a.work_crew) as workCrew, 
+				fn_workname(a.com_code, a.fac_code, a.work_code) as workCode, 
+				fn_workdename(a.com_code, a.fac_code, a.work_code, a.work_decode) as workDeCode, 
+			   a.work_no as workNo, a.order_state as orderState, a.pri_code as priCode,	c.item_type itemType, c.part_type as partType,
+			   c.part_no as partNo, c.part_name as partName, c.spec as partSpec, a.lot_no as lotNo, c.unit as unit, a.order_qty as orderQty,
+			   b.qty, COALESCE(nullif(b.qty,'')::numeric / nullif(a.order_qty,'')::numeric,0) * 100 as orderRate
+			   , a.remark,a.make_date,a.maker,a.edit_date,a.editor
+		from pro0010 a
+		left join pro0012 b on a.com_code = b.com_code and a.fac_code = b.fac_code 
+							and a.work_no = b.work_no  and a.work_date = b.work_date
+							and a.work_code = b.work_code and a.work_decode = b.work_decode 
+		left join bas0040 c on a.com_code = c.com_code and a.part_no = c.part_no
+		where a.plan_date between #{frPlanDate} and #{toPlanDate}
+		and a.com_code = #{comCode}
+		<if test="facCode != null and facCode != ''">
+			and a.fac_code = #{facCode}
+		</if>
+		<if test="workCode != null and workCode != ''">
+			and a.work_code = #{workCode}
+		</if>
+		<if test="workDecode != null and workDecode != ''">
+			and a.work_decode = #{workDecode}
+		</if>
+		<if test="partNo != null and partNo != ''">
+			and a.part_no like '%'||#{partNo}||'%'
+		</if>
+		<if test="itemType != null and itemType != ''">
+			and c.item_type = #{itemType}
+		</if>
+		<if test="partType != null and partType != ''">
+			and c.part_type = #{partType}
+		</if>
+		<if test="partNm != null and partNm != ''">
+			and c.part_name like '%'||#{partNm}||'%'
+		</if>
+    </select>
+</mapper>

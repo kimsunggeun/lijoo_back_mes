@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0250Dao">
+    <select id="getMat0250" parameterType="kr.co.igns.business.mat.model.mat0250.Mat0250ReqDto"	resultType="kr.co.igns.business.mat.model.mat0250.Mat0250VO">
+    	SELECT
+    		m0013.com_code,
+    		fn_compnm(m0013.com_code) as com_Name,
+    		fac_code,
+    		fn_fac_nm(m0013.com_code, fac_code) as fac_Name,
+    		regi_date,
+    		ilno,
+    		b0011.sys_name AS in_type,
+			b0012.sys_name AS in_cate,
+    		b0023.cust_name AS cust_code,
+    		m0013.part_no,
+    		in_qty,
+    		make_qty,
+    		box_qty,
+    		m0013.remark,
+    		m0013.print_type,
+    		m0013.user_flag,
+    		m0013.make_date,
+    		fn_username(m0013.com_code, m0013.maker) as maker,
+    		m0013.edit_date,
+    		fn_username(m0013.com_code, m0013.editor) as editor
+    	FROM
+    		mat0013 AS m0013
+   		JOIN
+    		bas0011 AS b0011 ON (m0013.in_type = b0011.sys_code AND b0011.code = 'IN_TYPE')
+    	JOIN
+    		bas0011 AS b0012 ON (m0013.in_cate = b0012.sys_code AND b0012.code = 'IN_CATE')
+    	JOIN
+    		bas0023 AS b0023 ON m0013.cust_code = b0023.cust_code
+    	<where>
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND m0013.com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="workFrDate != null and workFrDate != '' and workDate != null and workDate != ''" >
+				<![CDATA[
+					AND regi_date between #{workFrDate} and #{workDate}
+				]]>
+			</if>
+			<if test="inType != null and inType != ''">
+				<![CDATA[
+					AND in_type = #{inType}
+				]]>
+			</if>
+			<if test="inCate != null and inCate != ''">
+				<![CDATA[
+					AND in_cate = #{inCate}
+				]]>
+			</if>
+			<if test="custCode != null and custCode != ''">
+				<![CDATA[
+					AND m0013.cust_code = #{custCode}
+				]]>
+			</if>
+		</where>			
+	</select>
+	
+	<select id="getMat0250Detail" parameterType="kr.co.igns.business.mat.model.mat0250.Mat0014ReqDto"	resultType="kr.co.igns.business.mat.model.mat0250.Mat0014VO">
+			SELECT
+				fn_compnm(com_code) as com_Name,
+				fac_code,
+    			fn_fac_nm(com_code, fac_code) as fac_Name,
+				regi_date,
+				ilno,
+				no,
+				part_no,
+				fn_partname(com_code, part_no) as part_name,
+				lot_no,
+				lot_detail,
+				qty,
+				remark,
+				print_type,
+				user_flag,
+				make_date,
+				fn_username(com_code, maker) as maker,
+				edit_date,
+				fn_username(com_code, editor) as editor
+			FROM
+				mat0014
+			<where>
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="regiDate != null and regiDate != ''" >
+				<![CDATA[
+					AND regi_date = #{regiDate}
+				]]>
+			</if>
+			<if test="ilno != null and ilno != ''">
+				<![CDATA[
+					AND ilno = #{ilno}
+				]]>
+			</if>
+		</where>
+	</select>
+</mapper>

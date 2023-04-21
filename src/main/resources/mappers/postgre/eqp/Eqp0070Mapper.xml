@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.eqp.dao.postgre.Eqp0070Dao">
+        
+	<!-- 께측기 마스터 조회 -->
+    <select id="getHeaderItem" parameterType="kr.co.igns.business.eqp.model.eqp0070.Eqp0070Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0070.Eqp0070VO">
+		select a.com_code
+             , a.fac_code
+             , a.mea_gr
+             , a.mea_code
+             , a.mea_name
+             , a.mea_spec
+             , a.mea_state
+             , a.corr_month
+             , (case when a.corr_edate is null or a.corr_edate = ''
+                     then a.corr_sdate
+                     else a.corr_edate
+                end) as corr_pre_date
+             , to_char((case when a.corr_sdate is null or a.corr_sdate = '' then to_char(now(), 'YYYY-MM-DD')
+        	                 when a.corr_edate is null or a.corr_edate = '' then a.corr_sdate
+                             else a.corr_edate
+                        end :: date) + interval '1 months' * nullif(a.corr_month, '')::int, 'YYYY-MM') as corr_next_date
+          from bas0082 a
+         where 1 = 1
+           and a.com_code = #{comCode}
+           and a.fac_code = #{facCode}
+         <if test='meaGr != null and !meaGr.equals("")'>
+           and a.mea_gr = #{meaGr}
+         </if>
+         <if test='meaName != null and !meaName.equals("")'>
+           and a.mea_name like concat('%', #{meaName}, '%')
+         </if>
+         <if test='corrDate != null and !corrDate.equals("")'>
+           and a.corr_edate like concat(#{corrDate}, '%')
+         </if>
+           and a.user_flag = 'Y'
+           and a.corr_yn = 'Y'
+    </select>    
+    
+    <!-- 께측기 검교정 조회 -->
+    <select id="getDetailItem" parameterType="kr.co.igns.business.eqp.model.eqp0070.Eqp0070Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0070.Eqp0070DetailVO">
+		select a.com_code
+             , a.fac_code
+             , a.mea_code
+             , a.corr_month
+             , a.corr_date_old as corrPreDate
+             , a.corr_date
+             , a.corr_no
+             , a.corr_date_new as corrNextDate
+             , a.corr_agency
+             , a.corr_judge
+             , a.corr_reason
+             , a.remark
+             , a.ins_image
+             , a.user_flag
+             , a.make_date
+             , fn_username(a.com_code, a.maker) as maker
+             , a.edit_date
+             , fn_username(a.com_code, a.editor) as editor		
+          from eqp0020 a
+         where 1 = 1
+           and a.com_code = #{comCode}
+           and a.fac_code = #{facCode}
+           and a.mea_code = #{meaCode}
+         order by a.corr_date desc
+    </select>
+    
+    <!-- 께측기 검교정 등록 -->
+    <insert id="createEqp0020" parameterType="kr.co.igns.business.eqp.model.eqp0070.Eqp0070DetailVO">
+    	insert into eqp0020
+		(
+			  com_code
+			, fac_code
+            , mea_code
+            , corr_month
+            , corr_date_old
+            , corr_date
+            , corr_no
+            , corr_date_new
+            , corr_agency
+            , corr_judge
+            , corr_reason
+            , ins_image
+            , remark
+            , user_flag
+            , make_date
+            , maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}			
+			, #{meaCode}
+            , #{corrMonth}
+            , #{corrPreDate}
+            , #{corrDate}
+            , (select case when max(corr_no) is null 
+			  		  then 
+			  		 		'1'
+			  		  else 
+			  		 		(max(corr_no)::integer + 1)::text
+			  		   end
+			  	 from eqp0020
+			    where com_code = #{comCode}
+			      and fac_code = #{facCode}
+			      and mea_code = #{meaCode}
+			      and corr_date = #{corrDate}			      
+			  )            
+            , to_char((#{corrDate}:: date) + interval '1 months' * #{corrMonth}::int, 'YYYY-MM-DD')
+            , #{corrAgency}
+            , #{corrJudge}
+            , #{corrReason}
+			, #{insImage}
+            , #{remark}
+            , #{userFlag}
+			, now()
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 께측기 검교정 수정 -->
+    <update id="updateEqp0020" parameterType="kr.co.igns.business.eqp.model.eqp0070.Eqp0070DetailVO">
+		update eqp0020
+		   set corr_agency	= #{corrAgency}
+			 , corr_judge	= #{corrJudge}
+			 , corr_reason	= #{corrReason}
+			 , remark	    = #{remark}
+			 , ins_image	= #{insImage}			 
+			 , edit_date	= now()
+			 , editor		= #{editor}
+			 , user_flag    = #{userFlag}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and mea_code	= #{meaCode}
+		  and corr_date = #{corrDate}
+		  and corr_no	= #{corrNo}		  
+    </update>
+     
+    <!-- 께측기 검교정 삭제 -->       
+    <delete id="deleteEqp0020" parameterType="kr.co.igns.business.eqp.model.eqp0070.Eqp0070DetailVO">
+	   	delete from eqp0020
+	   	where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and mea_code	= #{meaCode}
+		  and corr_date = #{corrDate}
+		  and corr_no	= #{corrNo}	
+    </delete>
+     
+</mapper>

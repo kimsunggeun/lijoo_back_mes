@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0020Dao">
+
+	<select id="getCustCode" parameterType="kr.co.igns.business.pop.model.Pop0020ReqDto" resultType="kr.co.igns.business.pop.model.Pop0020VO">
+		select cust_code, fn_custname(com_code, cust_code) as cust_name from mat0010
+		 where com_code = #{comCode}
+		   and ord_state = '20'
+	</select>
+
+	<select id="getOrdNo" parameterType="kr.co.igns.business.pop.model.Pop0020ReqDto" resultType="kr.co.igns.business.pop.model.Pop0020VO">
+		SELECT row_number() over() AS id,ord_no from mat0010
+		 WHERE com_code = #{comCode}
+		   AND cust_code = #{custCode}
+		   AND ord_state = '20'
+	</select>
+	
+	<select id="getMat0011" parameterType="kr.co.igns.business.pop.model.Pop0020ReqDto" resultType="kr.co.igns.business.pop.model.Pop0020VO">
+		select row_number() over() AS id,*,d.price  from mat0011 a
+		  join mat0010 b on a.com_code = b.com_code and a.ord_no = b.ord_no
+		  join bas0040 c on a.com_code = c.com_code and a.part_no = c.part_no
+		  join bas0045 d on a.com_code = d.com_code and a.part_no = d.part_no and b.cust_code = d.cust_code and d.app_yn = 'Y'
+		 where a.com_code = #{comCode}
+		   and b.cust_code = #{custCode}
+		   and a.ord_no = #{ordNo}
+	</select>
+	
+	<select id="getMat0012" parameterType="kr.co.igns.business.pop.model.Pop0020ReqDto" resultType="kr.co.igns.business.pop.model.Pop0020VO">
+	
+		select fn_partname(a.com_code, a.part_no) as partName
+			 , a.*
+			 , b.lot_no
+			 , b.lot_detail 
+		from mat0012 a
+		join mat0018 b on b.com_code = a.com_code 
+					  and b.fac_code = a.fac_code
+					  and b.ord_no = a.ord_no
+					  and b.ilno = a.ilno 
+		where a.com_code = #{comCode}
+		  and a.fac_code = #{facCode}
+		  and a.ord_no = #{ordNo}
+		  and b.lot_no = #{lotNo}
+		  and a.part_no = #{partNo}
+		order by lot_detail desc;
+
+	</select>
+
+</mapper>

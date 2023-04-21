@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.AuthDao">
+        
+	<!-- 권한그룹 검색 조건   -->    
+    <sql id="searchGrp">
+    	<if test='comCode != null and !comCode.equals("")'>
+			and a.com_code = #{comCode}
+		</if>
+	</sql>
+	        
+    <!-- 권한그룹 전체 조회 -->
+    <select id="getAuthGroup" parameterType="kr.co.igns.framework.comm.model.AuthReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.AuthVO">
+        select (row_number() over()) as id
+        		, a.*
+        from sys0020 a
+        where	1 = 1
+			<include refid="searchGrp" />
+		order by a.com_code
+    </select>
+    
+    <insert id="createAuthGroup" parameterType="kr.co.igns.framework.comm.model.AuthVO">
+    	insert into sys0020
+			(com_code
+			, sys_type
+			, per_code
+			, per_name
+			, user_flag
+			, make_date
+			, maker
+			)
+		values(
+			#{comCode}
+			, #{sysType}
+			, #{perCode}
+			, #{perName}
+			, #{userFlag}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <update id="updateAuthGroup" parameterType="kr.co.igns.framework.comm.model.AuthVO">
+    	update sys0020
+			set per_name		= #{perName}
+				, edit_date		= now()
+				, editor		= #{editor}
+			where 	com_code 	= #{comCode}
+			and		per_code	= #{perCode}
+			and		sys_type	= #{sysType}
+    </update>
+    
+    <!-- 권한메뉴 전체 조회 -->
+    <select id="getMenuAuthGroup" parameterType="kr.co.igns.framework.comm.model.AuthReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.AuthMenuVO">
+        select 	a.com_code
+        		, a.sys_type
+        		, a.module_code
+        		, a.pa_code
+        		, a.pg_code
+        		, a.menu_code
+        		, a.menu_name
+        		, b.per_code  
+				, case when b.menu_code is not null 
+					then 
+						case when b.user_flag = 'Y' then 'Y' else 'N' end 
+					else 'N' end as user_flag
+		from	sys0010 a
+				left join 
+				(
+					select aa.* 
+					from 	sys0021 aa
+					where	1 = 1							
+					and	aa.per_code = #{perCode}
+				) b
+				on a.com_code = b.com_code
+				and a.sys_type = b.sys_type
+				and a.menu_code = b.menu_code
+		where	1 = 1
+		and a.com_code = #{comCode}
+		and a.lan_code = #{lanCode}
+		order by a.sort_flag 
+    </select>
+    
+    <insert id="createMenuAuthGroup" parameterType="kr.co.igns.framework.comm.model.AuthMenuVO">
+    	insert into sys0021
+			(com_code
+			 , sys_type
+			 , per_code
+			 , menu_code
+			 , user_flag
+			 , make_date
+			 , maker
+			)
+		values(
+			#{comCode}
+			, #{sysType}
+			, #{perCode}
+			, #{menuCode}
+			, #{userFlag}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <update id="updateMenuAuthGroup" parameterType="kr.co.igns.framework.comm.model.AuthMenuVO">
+    	update sys0021
+			set user_flag 			= #{userFlag}
+				, edit_date			= NOW()
+				, editor			= #{editor}
+			where com_code 			= #{comCode}
+			  and sys_type 			= #{sysType}
+			  and per_code 			= #{perCode}
+			  and menu_code 		= #{menuCode} 
+    </update>
+    
+</mapper>

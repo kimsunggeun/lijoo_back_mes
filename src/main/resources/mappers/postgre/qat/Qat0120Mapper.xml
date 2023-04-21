@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.qat.dao.postgre.Qat0120Dao">
+	    <!--불량코드 조회-->
+<select id="getDefCode" parameterType="kr.co.igns.business.qat.model.qat0120.Qat0120Dto" resultType="kr.co.igns.business.qat.model.qat0120.Qat0120VO" >	
+select sys_code,sys_name
+from bas0011
+where code = 'DEF_CODE'
+and com_code = #{comCode}
+</select>
+	    <!--불량현황 조회-->
+<select id="getdefStatus" parameterType="kr.co.igns.business.qat.model.qat0120.Qat0120Dto" resultType="kr.co.igns.business.qat.model.qat0120.Qat0120VO" >	
+	select 	tt.com_code, tt.fac_code
+				, tt.part_no as partNo
+				,tt.part_name as partName
+				,sum(tt.def_cnt) as defCnt,
+				sum(tt.def_a10) as defShape,
+				sum(tt.def_b10) as defDimension,
+				sum(tt.def_c10) as defSetting,
+				sum(tt.def_d10) as toolDamage,
+				sum(tt.def_e10) as defIntroduction,
+				sum(tt.def_f10) as defStamping,
+				sum(tt.def_z10) as defOther
+	from (
+		select t.com_code, t.fac_code, t.part_no, coalesce(qty, '0')::int as def_cnt,
+				case when t.def_code = 'A10' then  coalesce(qty, '0')::int else '0'::int end as def_a10,
+				case when t.def_code = 'B10' then  coalesce(qty, '0')::int else '0'::int  end as def_b10,
+				case when t.def_code = 'C10' then  coalesce(qty, '0')::int else '0'::int  end as def_c10,
+				case when t.def_code = 'D10' then  coalesce(qty, '0')::int else '0'::int  end as def_d10,
+				case when t.def_code = 'E10' then  coalesce(qty, '0')::int else '0'::int  end as def_e10,
+				case when t.def_code = 'F10' then  coalesce(qty, '0')::int else '0'::int  end as def_f10,
+				case when t.def_code = 'Z10' then  coalesce(qty, '0')::int else '0'::int  end as def_z10,
+				t.part_name
+		from (
+			select 	a.com_code, a.fac_code, a.part_no, b.part_name, a.def_code, sum(a.qty::integer) as qty
+			from 	pro0026 a
+			inner join bas0040 b on a.part_no = b.part_no
+			where 	a.event_cd = '30'
+			<if test="partNo != null and partNo != ''">
+			and	 	a.part_no like '%' || #{partNo}|| '%'
+			</if>
+			<if test="comCode != null and comCode != ''">
+			and 	a.com_code = #{comCode}
+			</if>
+			<if test="facCode != null and facCode != ''">
+			and 	a.fac_code = #{facCode}
+			</if>
+			<if test='reqDtFrom!= null and !reqDtFrom.equals("")'>
+			and 	to_char(a.make_date, 'YYYY-mm-DD') between #{reqDtFrom} and #{reqDtTo}
+			</if>
+			<if test='reqDtTo!= null and !reqDtTo.equals("")'>
+			and 	to_char(a.make_date, 'YYYY-mm-DD') between #{reqDtFrom} and #{reqDtTo}
+			</if>
+			group by a.com_code, a.fac_code, a.part_no, b.part_name, a.def_code
+		) t
+		group by t.com_code, t.fac_code, t.part_no, t.def_code, t.part_name, t.qty
+	) tt
+	group by tt.com_code, tt.fac_code, tt.part_no,tt.part_name
+
+</select>
+
+	    <!--불량수량 상제정보 조회-->
+<select id="getDefQtyDetail" parameterType="kr.co.igns.business.qat.model.qat0120.Qat0120Dto" resultType="kr.co.igns.business.qat.model.qat0120.Qat0120VO" >	
+		select 	to_char(a.make_date, 'YYYY-mm-DD') as regi_date
+			  , b.work_name as workName
+			  , d.work_dename as workDename
+			  , a.part_no
+			  , c.part_name
+			  , e.sys_name as prodType
+			  , f.sys_name as defCode
+			  , a.qty  as defCnt
+			  , a.lot_no
+			  , a.lot_detail
+			  , a.make_date
+			  , a.maker
+			  , a.edit_date
+			  , a.editor
+		--	  , a.remark
+		from 	pro0026 a
+		inner join bas0034 b on a.com_code = b.com_code and a.work_code = b.work_code
+		inner join bas0040 c on a.com_code = b.com_code and a.part_no = c.part_no
+		inner join bas0035 d on a.com_code = d.com_code and a.work_decode = d.work_decode
+		inner join bas0011 e on a.com_code = e.com_code and a.pro_type = e.sys_code 
+		inner join bas0011 f on a.com_code = f.com_code and a.def_code = f.sys_code and e.code = 'PROD_TYPE' and f.code = 'DEF_CODE'
+		where 	a.com_code = #{comCode}
+		and 	a.fac_code = #{facCode}
+		and 	a.part_no = #{partNo}
+		and  	e.code = 'PROD_TYPE'
+		and 	f.code = 'DEF_CODE'
+</select>
+
+	    <!--불량코드 상세정보 조회-->
+<select id="getDefDetail" parameterType="kr.co.igns.business.qat.model.qat0120.Qat0120Dto" resultType="kr.co.igns.business.qat.model.qat0120.Qat0120VO" >	
+		select to_char(a.make_date, 'YYYY-mm-DD') as regi_date
+			  , b.work_name as workName
+			  , d.work_dename as workDename
+			  , a.part_no
+			  , c.part_name
+			  , e.sys_name as prodType
+			  , f.sys_name as defCode
+			  , a.qty as defCnt
+			  , a.lot_no
+			  , a.lot_detail
+			  , a.make_date
+			  , a.maker
+			  , a.edit_date
+			  , a.editor
+		--	  , a.remark
+		from 	pro0026 a
+		inner join bas0034 b on a.com_code = b.com_code and a.work_code = b.work_code
+		inner join bas0040 c on a.com_code = b.com_code and a.part_no = c.part_no
+		inner join bas0035 d on a.com_code = d.com_code and a.work_decode = d.work_decode
+		inner join bas0011 e on a.com_code = e.com_code and a.pro_type = e.sys_code 
+		inner join bas0011 f on a.com_code = f.com_code and a.def_code = f.sys_code and e.code = 'PROD_TYPE' and f.code = 'DEF_CODE'
+		where 	a.com_code = #{comCode}
+		and 	a.fac_code = #{facCode}
+		and 	a.part_no = #{partNo}
+		and 	a.def_code = #{defCode}
+</select>
+
+</mapper>

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Sal0220Dao">
+        
+	<!-- 출하실적현황 조회 -->
+    <select id="getSal0220" parameterType="kr.co.igns.business.sales.model.sal0220.Sal0220ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0220.Sal0220VO">
+		select a.com_code as comCode
+			 , a.fac_code as facCode
+			 , a.ord_no as ordNo
+			 , a.ord_turn as ordTurn
+			 , a.ilno as ilNo
+			 , a.no	as no		 
+			 , a.out_date as outDate
+			 , a.out_insp_yn as outInspYn
+			 , a.cust_code as custCode
+			 , b.cust_name as custName
+			 , c.item_type as itemType
+			 , c.part_type as partType
+			 , a.part_no as partNo
+			 , c.part_name as partName
+			 , c.spec as spec
+			 , fn_comcodenm(c.com_code, 'UNIT', c.unit) as unit
+			 , a.lot_no as lotNo
+			 , a.lot_detail as lotDetail
+			 , a.qty as qty
+			 , a.stock_qty as stockQty
+			 , a.price as price
+			 , a.amount as amount
+			 , a.close_month as closeMonth
+			 , a.close_yn as closeYn
+			 , a.confirm_yn as confirmYn
+			 , a.remark as remark
+			 , a.make_date as makeDate
+			 , fn_username(a.com_code, a.maker) as maker
+			 , a.edit_date as editDate
+			 , fn_username(a.com_code, a.editor) as editor
+		from sal0120 a
+		join bas0023 b on a.com_code = b.com_code
+					  and a.cust_code = b.cust_code
+		join bas0040 c on a.com_code = c.com_code
+					  and a.part_no = c.part_no
+		where 	1=1
+		and		a.com_code = #{comCode}
+		and		a.fac_code = #{facCode}
+		<if test="custCode != null and custCode != ''">
+			and	a.cust_code = #{custCode}
+		</if>
+		<if test="itemType != null and itemType != ''">
+			and	c.item_type = #{itemType}
+		</if>
+		<if test="partType != null and partType != ''">
+			and	c.part_type = #{partType}
+		</if>
+		<if test="partNo != null and partNo != ''">
+			and	a.part_no like '%' || #{partNo} || '%'
+		</if>
+		<if test='endDate!= null and !endDate.equals("")'>
+			AND out_date between #{startDate} and #{endDate}
+		</if>
+		order by a.ilno asc, no asc
+    </select>
+    
+	<!-- 기타출고현황 조회 -->
+    <select id="getSal0220OtherRelease" parameterType="kr.co.igns.business.sales.model.sal0220.Sal0220ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0220.Sal0220VO">
+		select row_number() over(order by a.ilno desc, a.no desc) as id
+			 , a.com_code as comCode
+			 , a.fac_code as facCode
+			 , a.ilno as ilNo
+			 , a.no	as no
+			 , a.out_date as outDate
+			 , a.out_insp_yn as outInspYn
+			 , a.cust_code as custCode
+			 , b.cust_name as custName
+			 , c.item_type as itemType
+			 , c.part_type as partType
+			 , a.part_no as partNo
+			 , c.part_name as partName
+			 , c.spec as spec
+			 , fn_comcodenm(c.com_code, 'UNIT', c.unit) as unit
+			 , a.lot_no as lotNo
+			 , a.lot_detail as lotDetail
+			 , a.stock_qty as stockQty
+			 , a.qty as qty
+			 , a.price as price
+			 , a.amount as amount
+			 , a.close_month as closeMonth
+			 , a.close_yn as closeYn
+			 , a.confirm_yn as confirmYn
+			 , a.remark as remark
+			 , a.make_date as makeDate
+			 , fn_username(a.com_code, a.maker) as maker
+			 , a.edit_date as editDate
+			 , fn_username(a.com_code, a.editor) as editor
+		from sal0125 a
+		join bas0023 b on a.com_code = b.com_code
+					  and a.cust_code = b.cust_code
+		join bas0040 c on a.com_code = c.com_code
+					  and a.part_no = c.part_no
+		where 	1=1
+		and		a.com_code = #{comCode}
+		and		a.fac_code = #{facCode}
+		<if test="custCode != null and custCode != ''">
+			and	a.cust_code = #{custCode}
+		</if>
+		<if test="itemType != null and itemType != ''">
+			and	c.item_type = #{itemType}
+		</if>
+		<if test="partType != null and partType != ''">
+			and	c.part_type = #{partType}
+		</if>
+		<if test="partNo != null and partNo != ''">
+			and	a.part_no like '%' || #{partNo} || '%'
+		</if>
+		<if test='endDate!= null and !endDate.equals("")'>
+			AND out_date between #{startDate} and #{endDate}
+		</if>
+		order by a.ilno asc, no asc
+    </select>    
+    
+    <select id="getLocCode" parameterType="kr.co.igns.business.sales.model.sal0220.Sal0220VO"
+   	 					   resultType="String">
+    	select loc_code
+    	  from mat0021
+    	 where com_code = #{comCode}
+    	   and fac_code = #{facCode}
+    	   and lot_detail = #{lotDetail} 	 	   	 
+    </select>
+    
+   	<update id="updateMat0021" parameterType="kr.co.igns.business.sales.model.sal0220.Sal0220VO">
+		update mat0021
+		   set stock_qty = stock_qty::integer - #{qty}::integer
+			 , stock_amount	= stock_amount::integer - #{amount}::integer
+			 , out_qty = (coalesce(nullif(out_qty,''),'0')::integer + #{qty}::integer)::text
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code  = #{comCode}
+	 	  and fac_code = #{facCode}
+	 	  and loc_code = #{locCode}
+	 	  and part_no = #{partNo}
+	   	  and lot_detail = #{lotDetail}	   	 	   	 
+    </update>     
+        
+    <update id="updateMat0020" parameterType="kr.co.igns.business.sales.model.sal0220.Sal0220VO">
+		update mat0020
+		   set stock_qty = stock_qty::integer - #{qty}::integer
+			 , stock_amount	= stock_amount::integer - #{amount}::integer
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code  = #{comCode}
+	 	  and fac_code = #{facCode}
+	 	  and loc_code = #{locCode}
+	 	  and part_no = #{partNo}
+    </update>    
+
+    <!-- 출하등록 정보 삭제 -->
+    <delete id="deleteSal0220OhterRelease" parameterType="kr.co.igns.business.sales.model.sal0220.Sal0220VO">
+    	delete	
+    	  from	sal0125
+    	 where	com_code = #{comCode}
+    	   and	fac_code = #{facCode}
+		   and	ilno = #{ilNo}
+		   and	no = #{no}
+		   and	lot_detail = #{lotDetail}    	   
+    </delete> 
+    
+</mapper>

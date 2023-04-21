@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.eqp.dao.postgre.Eqp0060Dao">
+        
+	<!-- 수리내역 조회 -->
+    <select id="getFacilityItem" parameterType="kr.co.igns.business.eqp.model.eqp0060.Eqp0060Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0060.Eqp0060VO">
+    					
+    		select com_code
+    			 , fac_code
+    			 , eq_code
+    			 , rep_no
+    			 , reg_date
+    			 , occ_date
+    			 , act_date
+    			 , rep_remark
+    			 , rep_cust
+    			 , worker
+    			 , rep_amount
+    			 , remark
+    			 , maker
+    			 , make_date
+    			 , editor
+    			 , edit_date
+    		from eqp0050
+    		where eq_code = #{eqCode}
+    		  and fac_code like '%' || #{facCode} || '%'
+    		order by rep_no
+    </select>   
+    <!-- 수리내역 저장 -->
+    <insert id="createEqp0050" parameterType="kr.co.igns.business.eqp.model.eqp0060.Eqp0060Dto">
+   	  	<selectKey keyProperty="maxRepNo" resultType="string" order="BEFORE">
+   				select case when subString(MAX(rep_no),2,6) != (to_char(now(), 'YYMMDD'))
+		         then
+		            'R' || to_char(now(), 'YYMMDD') || '001'
+		         when
+		         	MAX(rep_no) is null
+		         then
+		         	'R' || to_char(now(), 'YYMMDD') || '001'
+		         else
+		            substring(MAX(rep_no), 1,8) || lpad(((COALESCE(substring(MAX(rep_no), 10), '0'))::integer + 1)::text, 2, '0')
+		         end
+			from eqp0050
+			where 1=1
+			  and eq_code = #{eqCode}
+	  	</selectKey>
+    	insert into eqp0050
+			(com_code
+		   , fac_code
+		   , eq_code	
+		   , rep_no	    
+		   , reg_date	
+		   , occ_date	
+		   , act_date	
+		   , rep_remark	
+		   , rep_cust	
+		   , worker	    
+		   , rep_amount	
+		   , remark
+		   , make_date	
+		   , maker
+			)
+		values(
+			  #{comCode}
+			, #{facCode}
+		    , #{eqCode}	
+		    , #{maxRepNo}
+		    <choose><when test='regDate == null'>, #{regDate}</when><otherwise>, to_char(to_timestamp(#{regDate},'yyyy-MM-dd HH24:mi:ss.SSSSSX'), 'yyyy-MM-dd')</otherwise></choose>		    
+		    <choose><when test='occDate == null'>, #{occDate}</when><otherwise>, to_char(to_timestamp(#{occDate},'yyyy-MM-dd HH24:mi:ss.SSSSSX'), 'yyyy-MM-dd')</otherwise></choose>		    
+		    <choose><when test='actDate == null'>, #{actDate}</when><otherwise>, to_char(to_timestamp(#{actDate},'yyyy-MM-dd HH24:mi:ss.SSSSSX'), 'yyyy-MM-dd')</otherwise></choose>
+		    , #{repRemark}
+		    , #{repCust}
+		    , #{worker}
+		    , #{repAmount}
+		    , #{remark}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <update id="updateEqp0050" parameterType="kr.co.igns.business.eqp.model.eqp0060.Eqp0060VO">
+		update eqp0050
+		   set reg_date		= to_char(to_timestamp(#{regDate},'yyyy-MM-dd HH24:mi:ss.SSSSSX'),'yyyy-MM-dd')
+			 , occ_date		= to_char(to_timestamp(#{occDate},'yyyy-MM-dd HH24:mi:ss.SSSSSX'),'yyyy-MM-dd')
+			 , act_date		= to_char(to_timestamp(#{actDate},'yyyy-MM-dd HH24:mi:ss.SSSSSX'),'yyyy-MM-dd')
+			 , rep_remark   = #{repRemark}
+			 , rep_cust		= #{repCust}
+ 			 , worker		= #{worker}
+ 			 , rep_amount	= #{repAmount}
+ 			 , remark		= #{remark}
+			 , edit_date	= now()
+			 , editor		= #{editor}
+		where com_code	= #{comCode}
+		  and fac_code	= #{facCode}
+		  and rep_no	= #{repNo}
+    </update>
+    
+    <!-- 수리내역 삭제 -->
+    <delete id="deleteEqp0050" parameterType="kr.co.igns.business.eqp.model.eqp0060.Eqp0060Dto">
+    	delete from eqp0050
+    	where rep_no = #{repNo}
+    </delete>
+</mapper>

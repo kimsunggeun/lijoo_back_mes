@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Sal0130Dao">
+        
+	<!-- 출하검사 조회 -->
+    <select id="getSal0130" parameterType="kr.co.igns.business.sales.model.sal0130.Sal0130ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0130.Sal0130VO">
+        with grp_sal0120 as 
+		(
+		   select com_code
+		       , fac_code
+		       , ord_no
+		       , no
+		       , ilno
+		       , out_date
+		       , part_no
+		       , cust_code
+		       , sum(qty::int)::text      as qty
+		       , out_insp_yn
+		    from sal0120
+		   where 1=1
+		   group by com_code, fac_code, ord_no, no, ilno, out_date, part_no, cust_code, out_insp_yn
+		)
+		select row_number() over(order by a.ord_no, a.no) as id
+			 , a.com_code
+		     , a.fac_code
+		     , a.ord_no
+		     , a.no
+		     , a.ilno
+		     , a.out_date
+		     , fn_custname(a.com_code, a.cust_code) as cust_name
+		     , a.part_no
+		     , b.part_name
+		     , b.spec
+		     , a.qty
+		     , fn_comcodenm(a.com_code, 'UNIT', b.unit) as unit
+		     , a.out_insp_yn
+		  from grp_sal0120 a
+		  join bas0040 b on a.com_code = b.com_code
+		               and a.part_no = b.part_no
+		  where a.out_insp_yn = 'Y'
+			<if test="comCode != null and comCode != ''">
+		 		<![CDATA[
+					AND a.com_code = #{comCode}
+				]]>
+		 	</if>
+		 	<if test="facCode != null and facCode != ''">
+		 		<![CDATA[
+					AND a.fac_code = #{facCode}
+				]]>
+		 	</if>
+		 	<if test="custCode != null and custCode != ''">
+		 		<![CDATA[
+					AND a.cust_code = #{custCode}
+				]]>
+		 	</if>
+		 	<if test="partType != null and partType != ''">
+		 		<![CDATA[
+					AND b.part_type = #{partType}
+				]]>
+		 	</if>
+		 	<if test="partName != null and partName != ''">
+		 		<![CDATA[
+					AND upper(b.part_name) like '%' || upper(#{partName}) || '%'
+				]]>
+		 	</if>
+		 	<if test="frDate != null and frDate != '' and toDate != null and toDate != ''" >
+				<![CDATA[
+					AND a.out_date between #{frDate} and #{toDate}
+				]]>
+			</if>
+    </select>
+    
+    <select id="getOutStatus" parameterType="kr.co.igns.business.sales.model.sal0130.SalOutStatusDto" resultType="kr.co.igns.business.sales.model.sal0130.Sal0130VO">
+    	select row_number() over(order by a.lot_detail) as id
+    		 , a.com_code 
+			 , a.fac_code 
+			 , a.lot_no
+			 , a.lot_detail
+			 , a.qty
+			 , b.loc_code
+			 , c.loc_name
+		  from sal0120 a
+		  left join mat0021 b on b.com_code = a.com_code 
+		  				and b.fac_code = a.fac_code 
+		  				and b.lot_detail = a.lot_detail
+		  left join bas0033 c on c.com_code = a.com_code 
+		  				and c.fac_code = a.fac_code 
+		  				and c.loc_code = b.loc_code
+		  <where>
+			<if test="comCode != null and comCode != ''">
+		 		<![CDATA[
+					AND a.com_code = #{comCode}
+				]]>
+		 	</if>
+		 	<if test="facCode != null and facCode != ''">
+		 		<![CDATA[
+					AND a.fac_code = #{facCode}
+				]]>
+		 	</if>
+		 	<if test="ilno != null and ilno != ''">
+		 		<![CDATA[
+					AND a.ilno = #{ilno}
+				]]>
+		 	</if>
+		 	<if test="ordNo != null and ordNo != ''">
+		 		<![CDATA[
+					AND a.ord_no = #{ordNo}
+				]]>
+		 	</if>
+		  </where>
+		    
+    </select>
+
+
+    <select id="getInspection" parameterType="kr.co.igns.business.sales.model.sal0130.SalOutStatusDto" resultType="kr.co.igns.business.sales.model.sal0130.Sal0130VO">
+		select	row_number() over() as id
+			  , b.serial_no
+			  , a.com_code 
+			  , a.part_no
+			  , a.insp_no
+			  , a.ins_type
+			  , a.ins_meth
+			  , a.jug_codeh
+			  , a.ins_unit
+			  , a.ins_base
+			  , a.ins_upp
+			  , a.ins_low
+			  , a.ins_cnt
+			  , a.ins_code
+			  , a.remark
+			  , a.make_date
+			  , a.maker
+			  , a.edit_date
+			  , a.editor
+			  , b.judge
+			  , b.sample1
+			  , b.sample2
+			  , b.sample3
+			  , b.sample4
+			  , b.sample5
+			  , #{ilno}  AS ilno
+			  , #{facCode} AS facCode
+			  , #{ordNo} AS ordNo
+			  , #{no} AS no
+			  , b.make_date
+			  , b.maker
+			  , b.editor
+			  , b.edit_date
+		from 	bas0061 a
+		left join 	qat0010 b 
+			 on 	a.com_code = b.com_code
+			 and 	a.part_no = b.part_no 
+			 and 	a.insp_no = b.insp_no 
+			 and 	a.ins_code = b.ins_code
+			 and 	a.ins_type = b.ins_type
+			 and 	a.ins_meth = b.ins_meth
+			 and 	b.fac_code = #{facCode}
+			 and 	b.ilno = #{ilno}
+		where 	a.com_code = #{comCode}
+		and 	a.part_no = #{partNo}
+		and 	a.user_flag = 'Y'
+		and		a.ins_code = #{insCode}
+		order by id 
+    </select>
+
+
+
+    
+    <insert id="createSal0130" parameterType="kr.co.igns.business.sales.model.sal0130.Sal0130VO">
+		insert into public.qat0010
+		(
+			  com_code
+			, fac_code
+			, ilno
+			, serial_no
+			, insp_date
+			, part_no
+			, insp_no
+			, ins_code
+			, ins_type
+			, ins_meth
+			, jug_codeh
+			, ins_unit
+			, judge
+			, sample1
+			, sample2
+			, sample3
+			, sample4
+			, sample5
+			, remark
+			, make_date
+			, maker
+			, insp_time
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{ilno}
+			, #{inspNo}
+			, substring(now()::varchar, 1, 11)
+			, #{partNo}
+			, #{inspNo}
+			, #{insCode}
+			, #{insType}
+			, #{insMeth}
+			, #{jugCodeh}
+			, #{insUnit}
+			, #{judge}
+			, #{sample1}
+			, #{sample2}
+			, #{sample3}
+			, #{sample4}
+			, #{sample5}
+			, #{remark}
+			, now()
+			, #{maker}
+			, 'N'
+		)
+		on conflict (com_code, fac_code, ilno, serial_no, insp_date, part_no, insp_no, ins_code, ins_type, ins_meth, jug_codeh, insp_time)
+		do update set
+			ins_unit = #{insUnit}
+			, judge = #{judge}
+			, sample1 = #{sample1}
+			, sample2 = #{sample2}
+			, sample3 = #{sample3}
+			, sample4 = #{sample4}
+			, sample5 = #{sample5}
+			, remark = #{remark}
+			, edit_date = now()
+			, editor = #{editor}
+		;
+    </insert>
+
+
+    <!-- 구매 입고정보 삭제 -->
+    <delete id="delSal0130" parameterType="kr.co.igns.business.sales.model.sal0130.Sal0130VO">
+		delete from qat0010 a
+		 where a.com_code = #{comCode}
+		   and a.fac_code = #{facCode}
+		   and a.ilno = #{ilno}
+		   and a.serial_no = #{serialNo}
+    </delete>
+    
+    
+</mapper>

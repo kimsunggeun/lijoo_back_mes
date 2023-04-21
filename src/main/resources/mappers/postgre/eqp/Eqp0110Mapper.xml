@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.eqp.dao.postgre.Eqp0110Dao">
+        
+	<!-- 설비 점검 현황 조회 -->
+    <select id="getEqp0032" parameterType="kr.co.igns.business.eqp.model.eqp0110.Eqp0110Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0110.Eqp0110VO">
+		select * from eqp0032
+		where com_code = #{comCode}
+		<if test='eqInsType != null and !eqInsType.equals("")'>
+			and eq_ins_type = #{eqInsType}
+		</if>
+		<if test='eqCode != null and !eqCode.equals("")'>
+			and eq_code LIKE CONCAT('%', #{eqCode}, '%')
+		</if>
+		<if test='judge != null and !judge.equals("")'>
+			and judge = #{judge}
+		</if>
+		    and insp_date BETWEEN #{startDate} AND #{endDate}
+    </select>
+     
+</mapper>

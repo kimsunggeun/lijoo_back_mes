@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0130Dao">
+
+	<!-- 공정불량현황 조회 -->
+	<select id="getPro0130" parameterType="kr.co.igns.business.ProdManage.model.pro0130.Pro0130ReqDto" resultType="kr.co.igns.business.ProdManage.model.pro0130.Pro0130GridVO">
+		SELECT
+			b0020.com_name AS com_code,
+			b0030.fac_name AS fac_code,
+			regi_date,
+			b0034.work_name AS work_code,
+			b0035.work_dename AS work_decode,
+			b0040.part_no,
+			b0040.part_name,
+			prod_type,
+			b0011.sys_name AS def_code,
+			def_cnt,
+			lot_no,
+			lot_detail,
+			select_type,
+			def_ok_cnt,
+			def_ng_cnt,
+			p0027.remark,
+			p0027.maker,
+			p0027.make_date,
+			p0027.editor,
+			p0027.edit_date
+		FROM
+			pro0027 AS p0027
+		JOIN
+			bas0020 AS b0020 ON p0027.com_code = b0020.com_code
+		JOIN
+			bas0030 AS b0030 ON p0027.fac_code = b0030.fac_code
+		JOIN
+			bas0034 AS b0034 ON p0027.work_code = b0034.work_code		
+		JOIN
+			bas0035 AS b0035 ON p0027.work_decode = b0035.work_decode		
+		JOIN		
+			bas0040 AS b0040 ON p0027.part_no = b0040.part_no
+		JOIN
+			bas0011 AS b0011 ON p0027.def_code = b0011.sys_code AND b0011.code = 'DEF_CODE'
+
+		<where>
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND p0027.com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND p0027.fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="workFrDate != null and workFrDate != '' and workDate != null and workDate != ''" >
+				<![CDATA[
+					AND regi_date between #{workFrDate} and #{workDate}
+				]]>
+			</if>
+			<if test="workCode != null and workCode != ''">
+				<![CDATA[
+					AND p0027.work_code = #{workCode}
+				]]>
+			</if>
+			<if test="workDecode != null and workDecode != ''">
+				<![CDATA[
+					AND p0027.work_decode = #{workDecode}
+				]]>
+			</if>
+			<if test="partNo != null and partNo != ''">
+				<![CDATA[
+					AND p0027.part_no like #{partNo}
+				]]>
+			</if>
+			<if test="defCode != null and defCode != ''">
+				<![CDATA[
+					AND p0027.def_code = #{defCode}
+				]]>
+			</if>
+		</where>
+		ORDER BY
+			regi_date ASC
+   	</select> 
+    
+
+</mapper>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0070Dao">
+        
+	<!-- 입고정보 조회 -->
+    <select id="getMat0012" parameterType="kr.co.igns.business.mat.model.mat0070.Mat0070ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0070.Mat0012VO">
+             select a.com_code
+        		, a.fac_code
+        		, a.ord_no
+        		, a.no 
+        		, a.regi_date
+        		, a.ilno
+        		, c.cust_code 
+        		, a.part_no
+        		, d.cust_name 
+        		, a.qty
+        		, a.in_qty
+        		, a.make_qty
+        		, a.box_qty
+        		, a.in_price
+        		, a.in_amount
+        		, a.rem_qty
+        		, a.remark
+        		, a.print_type
+        		, a.user_flag
+        		, a.make_date
+        		, a.maker
+        		, a.edit_date
+        		, a.editor      	
+        		, b.part_name   		
+          from mat0012 a
+          inner join bas0040 b on a.com_code  = b.com_code 
+       								  and a.part_no = b.part_no 
+       	 inner join mat0010 c on a.com_code  = c.com_code 
+       	 									and a.ord_no = c.ord_no
+       	inner join bas0023 d on a.com_code  = d.com_code 
+       										and d.cust_code = c.cust_code 
+        where a.com_code = #{comCode}
+       	   and d.cust_code like concat('%', #{custCode}, '%')
+           and b.part_no like concat('%', #{partNo}, '%')
+          and a.regi_date between #{reqDtFrom} and #{reqDtTo}
+          order by a.regi_date desc
+    </select>
+    
+	<!-- 입고정보 상세 조회 -->
+    <select id="getMat0018" parameterType="kr.co.igns.business.mat.model.mat0070.Mat0070ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0070.Mat0018VO">
+    	select  a.regi_date
+     		  , a.part_no
+     		  , b.part_name 
+     		  , a.qty
+     		  , a.lot_no
+     		  , a.lot_detail
+     		  , a.ilno
+     		  , a.serial_no
+     		  , a.print_type
+           from mat0018 a
+           join bas0040 b on a.com_code = b.com_code
+           				 and a.part_no = b.part_no
+          where a.com_code = #{comCode}
+        	and a.fac_code = #{facCode}
+        	and a.ilno = #{ilno}
+           order by a.lot_detail
+        		 
+    </select>
+    
+    
+    <!-- 거래명세서 -->
+    <select id="getTransRptHeader" parameterType="java.util.HashMap" resultType="kr.co.igns.business.mat.model.mat0070.TransRptVO">
+	with tb_delivery as
+	(
+		select a.com_code
+			 , a.fac_code
+			 , a.ilno
+			 , a.regi_date
+			 , min(b.cust_code)				as cust_code
+			 , sum(a.in_amount::numeric) 	as amount
+		  from mat0012 a
+		  join mat0010 b on a.com_code = b.com_code
+		  				and a.ord_no = b.ord_no
+		 where a.com_code = #{comCode}
+		   and a.fac_code = #{facCode}
+		   and a.ilno in 
+            <foreach collection="ilno_list" item="item" index="index" separator="," open="(" close=")">          
+            #{item}
+            </foreach>
+		 group by a.com_code, a.fac_code, a.ilno, a.regi_date
+	)
+	select a.com_code
+		 , a.fac_code
+		 , a.ilno
+		 , a.regi_date
+		 , b.com_name
+		 , rpad(b.com_number, 12, ' ')	as com_num
+		 , b.name						as ceo_name
+		 , b.addr						as com_addr
+		 , c.cust_code
+		 , c.cust_name
+		 , rpad(c.cust_no, 12, ' ')		as cust_num
+		 , c.name			as cust_ceo_name
+		 , c.addr			as cust_addr
+		 , a.amount
+		 , a.amount * 0.1 	as vat
+		 , a.amount * 1.1 	as total
+		 , d.keeper
+	  from tb_delivery a
+	  join bas0020 b on a.com_code = b.com_code
+	  join bas0023 c on a.com_code = c.com_code
+	  				and a.cust_code = c.cust_code
+	  join (select '(공급자 보관용)' as keeper
+  			union
+  			select '(공급받는자 보관용)' as keeper) d on 1=1
+	 order by a.com_code, a.fac_code, a.ilno, d.keeper desc
+    </select>
+    
+    
+    <select id="getTransRptSub" parameterType="java.util.HashMap" resultType="kr.co.igns.business.mat.model.mat0070.TransRptSubVO">
+    	select (ROW_NUMBER() OVER()) AS num
+        	  , a.part_no
+        	  , b.part_name  
+        	  , a.in_qty			as qty
+        	  , a.box_qty
+        	  , a.in_price
+        	  , a.in_amount  	 		
+           from mat0012 a
+           join bas0040 b on a.com_code = b.com_code 
+       					 and a.part_no = b.part_no 
+          where a.com_code = #{comCode}
+            and a.fac_code = #{facCode}
+            and a.ilno = #{ilno}  
+    </select>
+    
+
+</mapper>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0080Dao">
+        
+	<!-- 구매발주업로드 정보 -->
+    <select id="getPurchaseOrder" parameterType="kr.co.igns.business.mat.model.mat0080.Mat0080VO" resultType="kr.co.igns.business.mat.model.mat0080.Mat0080VO">
+		SELECT #{id} AS id,
+				#{comCode} AS comCode ,
+				#{facCode} AS facCode ,
+				#{no} As no ,		       
+				#{regiDate} AS regiDate,
+				#{custCode} AS custCode ,
+				(
+					SELECT cust_name 
+					FROM bas0023 
+					WHERE com_code = #{comCode}
+					  AND cust_code = #{custCode}
+				) AS custName ,
+				#{deliDate} AS deliDate ,
+				#{partNo} AS partNo ,
+				#{qty} AS qty
+    </select>
+
+	<!-- 구매발주업로드 저장 -->
+	<insert id="insertPurchaseOrder" parameterType="kr.co.igns.business.mat.model.mat0080.Mat0080VO">
+		<selectKey resultType="string" keyProperty="maxOrdNo" order="BEFORE">
+			SELECT COALESCE(to_char(now(),'YYMMDD') || LPAD(max(substring(ord_no,7,4)::INTEGER + 1)::VARCHAR,4,'0') , TO_CHAR(NOW(),'YYMMDD')||'0001')
+			from mat0010
+			WHERE SUBSTRING(ord_no, 0, 7)=TO_CHAR(NOW(), 'YYMMDD')
+		</selectKey>
+		INSERT INTO mat0010
+		(
+			  com_code
+			, fac_code
+			, regi_date
+			, ord_no
+			, cust_code
+			, ord_state
+			, user_flag
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{regiDate}
+			, #{maxOrdNo}
+			, #{custCode}
+			, '10'
+			, 'Y'
+			, current_date
+			, #{maker}
+		)
+	</insert>
+	
+	<!-- 구매발주업로드 상세 저장 -->
+	<insert id="insertDetailPurchaseOrder" parameterType="kr.co.igns.business.mat.model.mat0080.Mat0080VO">
+		<selectKey resultType="string" keyProperty="maxOrdNo" order="BEFORE">
+			SELECT MAX(ord_no)
+			from mat0010
+			WHERE SUBSTRING(ord_no, 0, 7)=TO_CHAR(NOW(), 'YYMMDD')
+		</selectKey>
+		INSERT INTO mat0011
+		(
+			  com_code
+			, fac_code
+			, regi_date
+			, deli_date
+			, ord_no
+			, no
+			, part_no
+			, qty
+			, price
+			, amount
+			, in_qty
+			, ret_qty
+			, rem_qty
+			, user_flag
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{regiDate}
+			, substring(#{deliDate},0,11) 	
+			, #{maxOrdNo}
+			, '1'
+			, #{partNo}
+			, #{qty}
+			, (
+				select price
+				from bas0045
+				where app_yn = 'Y'
+  				and part_no = #{partNo}
+			  )
+			, (#{qty}::integer * (select price::integer from bas0045 where app_yn = 'Y' and part_no = #{partNo}))::varchar
+			, '0'
+			, '0'
+			, #{qty}
+			, 'Y'
+			, current_date
+			, #{maker}
+		)
+	</insert>
+</mapper>

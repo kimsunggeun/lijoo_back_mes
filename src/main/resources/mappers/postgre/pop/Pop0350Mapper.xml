@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0350Dao">
+	
+	<!-- 경로유형(조회조건) 조회 -->
+	<select id="getPathCode" parameterType="kr.co.igns.business.pop.model.Pop0350ReqDto" resultType="kr.co.igns.business.pop.model.Pop0350VO" >
+		select a.path_code, b.path_name
+		  from bas0041 a
+		  join bas0037 b on a.com_code = b.com_code and a.path_code = b.path_code 
+		 where a.com_code = #{comCode}
+		   and a.part_no = #{partNo}
+	</select>
+	
+	<!-- 공정(조회조건) 조회 -->
+	<select id="getProCode" parameterType="kr.co.igns.business.pop.model.Pop0350ReqDto" resultType="kr.co.igns.business.pop.model.Pop0350VO" >
+		  select a.pro_code, b.pro_name  from bas0038 a
+		  join bas0031 b on a.com_code = b.com_code and a.pro_code = b.pro_code
+		  where a.com_code = #{comCode}
+		    and a.path_code = #{pathCode}
+	</select>
+	
+	<!-- 작업반(조회조건) 조회 -->
+	<select id="getWorkDecode" parameterType="kr.co.igns.business.pop.model.Pop0350ReqDto" resultType="kr.co.igns.business.pop.model.Pop0350VO" >
+    select work_decode, work_dename from bas0035
+     where com_code = #{comCode}
+       and work_code = #{proCode}
+	</select>
+	
+	<!-- 작업반(LookUp) 조회 -->
+	<select id="getWorkDecode2" parameterType="kr.co.igns.business.pop.model.Pop0350ReqDto" resultType="kr.co.igns.business.pop.model.Pop0350VO" >
+    select work_decode, work_dename from bas0035
+     where com_code = #{comCode}
+	</select>
+	
+	<!-- 로트정보 저장 -->
+	<insert id="createPro0026" parameterType="kr.co.igns.business.pop.model.Pop0350VO" >
+        	insert into pro0026
+		(
+			  com_code
+			, fac_code
+			, ilno
+			, work_no
+			, pro_type
+			, def_code
+			, pro_code
+			, work_code
+			, work_decode
+			, wh_code
+			, event_cd
+			, stock_type
+			, part_no
+			, qty
+			, lot_no
+			, lot_detail
+			, cancel_flag
+			, user_flag
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, (to_char(now(), 'YYMMDD'))
+			, (to_char(now(), 'YYMMDD'))
+			, '10'
+			, '0'
+			, #{proCode}
+			, (
+				  select a.work_code from bas0034 a
+				    join bas0035 b on a.com_code = b.com_code and a.work_code = b.work_code 
+				   where a.com_code = #{comCode}
+				     and b.work_decode = #{workDecode}
+			  )
+			, #{workDecode}
+			, #{workDecode}
+			, '20'
+			, '20'
+			, #{partNo}
+			, #{qty}
+			, (to_char(now(), 'YYMMDD'))
+			, (
+			    select case when subString(MAX(lot_detail),0,10) !=  'REG' || (to_char(now(), 'YYMMDD'))
+			    	then 
+			    		'REG' || (to_char(now(), 'YYMMDD')) || '0001'
+			    	when
+			    		MAX(lot_detail) is null
+			    	then 
+			    		'REG' || (to_char(now(), 'YYMMDD')) || '0001'
+			    	else
+			    	'REG' || (to_char(now(), 'YYMMDD')) || lpad(((substr(max(lot_detail), 10))::integer + 1)::text, 4, '0')
+			    	end
+				  from pro0026
+				 where com_code = #{comCode}
+			  )
+			, 'N'
+			, 'Y'
+			, now()
+			, #{maker}
+		)
+	</insert>
+
+
+</mapper>

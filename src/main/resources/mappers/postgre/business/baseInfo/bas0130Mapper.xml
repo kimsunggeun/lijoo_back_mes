@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.baseInfo.bas0130.dao.postgre.Bas0130Dao">
+
+    <!-- 근무시간/휴게시간  GET -->
+    <select id="getWorkTime" parameterType="kr.co.igns.business.baseInfo.bas0130.model.Bas0130Dto" resultType="kr.co.igns.business.baseInfo.bas0130.model.Bas0080VO">        
+		SELECT A.com_code as comCode, A.fac_code as facCode, A.work_type as workType, A.work_code as workCode, A.start_time as startTime, A.end_time as endTime,
+			   A.remark, A.user_flag as userFlag, A.maker, A.make_date as makeDate, A.editor, A.edit_date as editDate 
+		FROM bas0080 A
+  		WHERE A.com_code = #{comCode}
+ 		<if test="facCode != null and facCode != ''">
+		  AND A.fac_code = #{facCode}
+		</if>
+		  ;
+    </select>
+    
+    <!-- 근무시간/휴게시간 SET -->
+    <insert id="setWorkTime" parameterType="kr.co.igns.business.baseInfo.bas0130.model.Bas0080VO">
+		WITH UPSERT AS (
+			UPDATE bas0080
+			SET start_time = #{startTime}, 
+				end_time = #{endTime},  
+				remark = #{remark}, 
+				user_flag = #{userFlag}, 
+				edit_date = now(), 
+				editor = #{maker}
+			WHERE com_code = #{comCode} 
+			  AND fac_code = #{facCode} 
+			  AND work_type = #{workType} 
+			  AND work_code = #{workCode} 
+		RETURNING * )
+		INSERT INTO bas0080 (com_code, fac_code, work_type, work_code, start_time, end_time, remark, user_flag, make_date, maker)
+		SELECT #{comCode}, #{facCode}, #{workType}, #{workCode}, #{startTime}, #{endTime}, #{remark}, #{userFlag}, now(), #{maker}
+		WHERE not exists (SELECT * from UPSERT)
+		;
+    </insert>
+    
+    <!-- 근무시간/휴게시간 DEL -->
+    <delete id="delWorkTime" parameterType="kr.co.igns.business.baseInfo.bas0130.model.Bas0130Dto">
+		DELETE FROM bas0080
+		WHERE com_code = #{comCode}
+		  AND fac_code = #{facCode} 
+		  AND work_type = #{workType} 
+		  AND work_code = #{workCode}
+		  ;
+    </delete>
+    
+    <!-- 근무일  GET -->
+    <select id="getWorkDate" parameterType="kr.co.igns.business.baseInfo.bas0130.model.Bas0130Dto" resultType="kr.co.igns.business.baseInfo.bas0130.model.Bas0081VO">        
+		SELECT A.com_code as comCode, A.fac_code as facCode, A.work_date as workDate, A.week, A.holi_type as holiType, A.holi_name as holiName,
+			   A.remark, A.user_flag as userFlag, A.maker, A.make_date as makeDate, A.editor, A.edit_date as editDate 
+		FROM bas0081 A
+		WHERE A.com_code = #{comCode}
+		  AND A.fac_code = #{facCode}
+		  AND A.work_date like #{year}||'-'||#{month}||'%'
+		ORDER BY A.work_date
+		;
+    </select>
+    
+    <!-- 근무일 SET -->
+    <update id="setWorkDate" parameterType="kr.co.igns.business.baseInfo.bas0130.model.Bas0081VO">
+		UPDATE bas0081
+		SET holi_type = #{holiType},
+			holi_name = #{holiName},
+		   	user_flag = #{userFlag}, 
+		   	edit_date = now(), 
+		   	editor = #{maker}
+ 		WHERE com_code = #{comCode} 
+   		  AND fac_code = #{facCode} 
+   		  AND work_date = #{workDate}
+   		  ;
+    </update>
+    
+    <!-- 월별 날짜 Data 생성 -->
+    <insert id="setMonthData" parameterType="kr.co.igns.business.baseInfo.bas0130.model.Bas0130Dto">
+    	DELETE FROM bas0081
+    	WHERE com_code = #{comCode} 
+   		  AND fac_code = #{facCode}
+   		  AND substring(work_date,1,4) = #{year}
+   		  AND substring(work_date,6,2) = #{month}
+    	  ;
+    	
+		INSERT INTO bas0081 (com_code, fac_code, work_date, week, holi_type, holi_name, remark, user_flag, make_date, maker)
+		SELECT #{comCode}, #{facCode}, A.ymd, (CASE A.YAMND_NUM WHEN '1' THEN '일'
+																WHEN '2' THEN '월'
+		     													WHEN '3' THEN '화'
+		     													WHEN '4' THEN '수'
+		     													WHEN '5' THEN '목'
+		     													WHEN '6' THEN '금'
+		     													WHEN '7' THEN '토' END),
+			   (CASE A.HLDY when '1' then '2' else '1' end), null, null, 'Y', now(), #{maker}
+		FROM (
+				WITH BASE_DATE AS (
+			    	SELECT DATE(GENERATE_SERIES((#{year}||'-01-01')::date, (#{year}||'-12-31')::date, '1 day')) AS YMD
+			    )
+				SELECT YMD::text,
+					   TO_CHAR(YMD, 'DAY') AS YAMND,
+					   TO_CHAR(YMD, 'D') AS YAMND_NUM,
+					   CASE WHEN TO_CHAR(YMD, 'D') IN ('1', '7') THEN 1 END AS HLDY
+				FROM BASE_DATE
+			) A
+		WHERE SUBSTRING(A.YMD, 6, 2) = #{month}
+		;
+    </insert>
+ 
+</mapper>

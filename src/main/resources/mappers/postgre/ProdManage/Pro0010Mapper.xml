@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0010Dao">
+        
+	<!-- 생산계획 조회 -->
+	<select id="getPro0010" parameterType="kr.co.igns.business.ProdManage.model.pro0010.Pro0010ReqDto" resultType="String">
+		select fn_getpro0010(#{comCode}, #{facCode}, #{partNo}, #{frPlanDate}, #{toPlanDate}) as getpro0010;												
+   	</select> 
+    
+    <select id="getBas0081" parameterType="kr.co.igns.business.ProdManage.model.pro0010.Pro0010ReqDto" 
+    						   resultType="kr.co.igns.business.ProdManage.model.pro0010.Bas0081VO">
+	    select com_code as comCode, fac_code as facCode, work_date as workDate, week, holi_type as holiType
+		from bas0081
+		where work_date between #{frPlanDate} and #{toPlanDate}															
+    </select>
+    
+    <!-- 작지대상품목 조회 -->
+    <select id="getPro0010Detail" parameterType="kr.co.igns.business.ProdManage.model.pro0010.Pro0010ReqDto" resultType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050VO">
+		select  a.com_code as comCode, a.fac_code as facCode, plan_date as planDate, work_no as workNo, 
+				a.work_code as workCode,c.work_name as workName, 
+				a.work_decode as workDecode, fn_workdename(a.com_code, a.fac_code, a.work_code, a.work_decode) as workDeName, 
+				order_state as orderState, a.work_date as workDate,	pri_code as priCode, path_code as pathCode, 
+				fn_pathcodename(a.com_code, a.fac_code, a.path_code) as pathName, b.item_type as itemType, b.part_type as partType, 
+				b.part_no as partNo, b.part_name as partName, b.spec as partSpec, a.work_crew as workCrew, a.order_qty as orderQty, 
+				b.unit as partUnit, a.lot_no as lotNo, a.remark , a.plan_no as planNo, 
+				a.make_date as makeDate, a.maker, a.edit_date as editDate,a.editor 
+		from pro0010 a
+		left join bas0040 b on a.com_code = b.com_code and a.part_no = b.part_no
+		left join bas0034 c on a.com_code = c.com_code and a.work_code = c.work_code
+		where a.COM_CODE = #{comCode}
+		<if test="facCode != null and facCode != ''">
+			AND a.FAC_CODE = #{facCode}
+		</if>
+		<if test="partNo != null and partNo != ''">
+			AND a.PART_NO = #{partNo}
+		</if>
+		<if test="frPlanDate != null and frPlanDate != ''">
+		<![CDATA[
+		   and a.plan_date >= #{frPlanDate}
+		]]>		   		   
+		</if>
+		<if test="toPlanDate != null and toPlanDate != ''">
+		<![CDATA[
+		   and a.plan_date <= #{toPlanDate}
+		]]>		   
+		</if>
+		and order_state &lt;= '40'
+		order by plan_date,work_no desc;
+														
+   	</select>
+ 
+    <!-- 작지대상품목 삽입 및 수정 -->
+    <insert id="upsertPro0010" parameterType="kr.co.igns.business.ProdManage.model.pro0010.Pro0010VO">
+		INSERT INTO pro0010(
+    		com_code,
+    		fac_code,
+    		work_no,
+			plan_date,
+			work_date,
+			work_code,
+			work_decode,
+			order_state,
+			pri_code,
+			path_code,
+			work_crew,
+			part_no,
+			order_qty,
+			lot_no,
+			remark,
+			plan_no,
+			make_date,
+			maker
+    	) VALUES (
+    		#{comCode},
+    		#{facCode},
+    		<choose>
+    			<when test="workNo != null and workNo != ''">
+    				#{workNo},
+    			</when>
+    			<otherwise>
+    				(
+						select 'PR' || substring(replace(#{planDate}, '-', ''), 3)|| lpad((coalesce(nullif(right(max(work_no) ,4),''), '0' )::integer + 1)::text, 4, '0')
+                    	from pro0010
+                    	where com_code = #{comCode}
+                    	and left(work_no,8) = 'PR' || substring(replace(#{planDate}, '-', ''), 3)
+				  	),
+    			</otherwise>
+    		</choose>
+    		
+    		SUBSTRING(#{planDate},1,10),
+    		#{workDate},
+    		#{workCode},
+    		#{workDecode},
+    		#{orderState},
+    		#{priCode},
+    		#{pathCode},
+    		#{workCrew},
+    		#{partNo},
+    		#{orderQty},
+    		TO_CHAR(NOW(), 'YYMMDD'),
+    		#{remark},
+    		#{planNo},
+    		now(),
+    		#{maker}
+    	)
+    	ON CONFLICT ON CONSTRAINT pro0010_pkey
+    	DO UPDATE
+    	SET
+			plan_date = SUBSTRING(#{planDate},1,10),
+			work_date = #{workDate},
+			work_code = #{workCode},
+			work_decode = #{workDecode},
+			order_state = #{orderState},
+			pri_code = #{priCode},
+			path_code = #{pathCode},
+			work_crew = #{workCrew},
+			part_no = #{partNo},
+			order_qty = #{orderQty},
+			lot_no = #{lotNo},
+			remark = #{remark},
+			plan_no = #{planNo},
+			edit_date = now(),
+			editor = #{maker}
+			
+    </insert>
+    
+    <!-- 작지대상 품목 삭제 -->
+    <delete id="deletePro0010" parameterType="kr.co.igns.business.ProdManage.model.pro0010.Pro0010VO">
+    	DELETE FROM PRO0010
+		WHERE com_code = #{comCode} 
+		  AND fac_code = #{facCode} 
+		  AND work_no = #{workNo}
+    </delete>
+    
+    <!-- 제품군,품목군 조회 -->
+    <select id="getBas0040" parameterType="kr.co.igns.business.ProdManage.model.pro0010.Bas0040ReqDto" 
+    						   resultType="kr.co.igns.business.ProdManage.model.pro0010.Bas0040VO">
+	    SELECT
+	    	b0040.part_no,
+	    	b0040.part_name,
+	    	b0040.item_type,
+	    	b0011.sys_name AS item_type_nm,
+	    	b0040.part_type,
+	    	b0012.sys_name AS part_type_nm
+		FROM 
+			BAS0040 AS b0040
+		JOIN
+			BAS0011 AS b0011 ON b0011.code = 'ITEM_TYPE' AND b0011.sys_code = b0040.item_type
+		JOIN
+			BAS0011 AS b0012 ON b0012.code = 'PART_TYPE' AND b0012.sys_code = b0040.part_type
+		WHERE
+			b0040.part_no = #{partNo} AND
+			b0040.com_code = #{comCode}												
+    </select>
+</mapper>

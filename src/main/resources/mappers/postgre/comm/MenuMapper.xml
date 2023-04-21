@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.MenuDao">
+      
+    <select id="getRouterMenu" parameterType="kr.co.igns.framework.comm.model.MenuReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.UserMenuVO">
+		<![CDATA[
+		select	menu_code
+				, menu_name
+				, module_code
+				, pa_code
+				, pg_code
+		from 	sys0010 a
+		where	1 = 1
+		and		a.pa_code != ''
+		and		a.pg_code != ''
+		and		a.lan_code = 'ko'
+		and		a.user_flag = 'Y'
+		and		a.com_code = #{comCode}
+		order by sort_flag
+		]]>
+    </select>
+        
+    
+    <select id="getAllMenu" parameterType="kr.co.igns.framework.comm.model.MenuReqDto" 
+						resultType="kr.co.igns.framework.comm.model.UserMenuVO">
+		select (row_number() over(order by a.sort_flag)) as id, a.*
+		from	sys0010 a 
+		where	1 = 1
+		and		a.com_code = #{comCode}
+		<if test='sysType != null and !sysType.equals("")'>
+		and 	a.sys_type  in( select unnest(string_to_array(#{sysType},',')) )
+		</if>
+		<if test='moduleCode != null and !moduleCode.equals("")'>
+		and 	a.module_code  in( select unnest(string_to_array(#{moduleCode},',')) )
+		</if>
+		<if test='lanCode != null and !lanCode.equals("")'>
+		and 	a.lan_code  in( select unnest(string_to_array(#{lanCode},',')) )
+		</if>
+		order by a.sort_flag
+    </select>
+    
+    <select id="getUserMenu" parameterType="kr.co.igns.framework.comm.model.MenuReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.UserMenuVO">
+		select (row_number() over(order by c.sort_flag)) as id, c.*
+		from	bas0022 a
+				left join sys0021 b
+					on a.per_code = b.per_code
+					and b.user_flag = 'Y'
+				join sys0010 c 
+					on a.com_code  = c.com_code
+					and b.sys_type = c.sys_type
+					and b.menu_code = c.menu_code
+					and c.user_flag = 'Y'
+					and	c.lan_code = #{lanCode}
+		where	1 = 1
+		<if test='userId != null and !userId.equals("")'>
+		and 	a.user_id = #{userId}
+		</if>
+		
+		and		a.com_code = #{comCode}
+		order by c.sort_flag
+		
+    </select>
+       
+    <insert id="createMenu" parameterType="kr.co.igns.framework.comm.model.UserMenuVO">
+    	insert into sys0010
+			(com_code
+			, sys_type
+			, menu_code
+			, menu_name
+			, module_code
+			, pa_code
+			, pg_code
+			, lan_code
+			, sort_flag
+			, remark
+			, user_flag
+			, make_date
+			, maker
+			)
+		VALUES(
+			  #{comCode}
+			, #{sysType}
+			, #{menuCode}
+			, #{menuName}
+			, #{moduleCode}
+			, #{paCode}
+			, #{pgCode}
+			, #{lanCode}  
+			, #{sortFlag}
+			, #{remark}
+			, #{userFlag}
+			, NOW()
+			, #{maker}
+			)
+    </insert>
+    
+    <update id="updateMenu" parameterType="kr.co.igns.framework.comm.model.UserMenuVO">
+    	update sys0010
+			set menu_name  			= #{menuName}
+				, module_code		= #{moduleCode}
+				, pa_code    		= #{paCode}
+				, pg_code    		= #{pgCode}
+				, sort_flag  		= #{sortFlag}
+				, remark     		= #{remark}
+				, user_flag  		= #{userFlag}
+				, edit_date         = NOW()
+				, editor			= #{editor}
+			where 1 = 1
+			and	com_code    		= #{comCode}
+			and sys_type   			= #{sysType}
+			and	menu_code 			= #{menuCode}
+			and	lan_code 			= #{lanCode}
+				
+    </update>
+</mapper>

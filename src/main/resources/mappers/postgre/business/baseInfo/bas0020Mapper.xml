@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.baseInfo.bas0020.dao.postgre.Bas0020Dao">	
+	
+	<!-- 거래처 업로드 정보 -->
+	<select id="getAccountInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0023VO" resultType="kr.co.igns.business.baseInfo.bas0020.model.Bas0023VO">
+		SELECT #{id} AS id ,		
+			   #{no} AS no ,
+			   #{comCode} AS comCode ,
+			   #{custCode} AS custCode ,
+			   #{custName} AS custName ,
+			   #{custType} AS custType ,
+			   #{matType} AS matType ,
+			   #{custNo} AS custNo ,
+			   #{name} AS name ,
+			   #{conType} AS conType ,
+			   #{secType} AS secType ,
+			   #{postNo} AS postNo ,
+			   #{addr} AS addr ,
+			   #{tel} AS tel ,
+			   #{fax} AS fax ,
+			   #{email} AS email ,
+			   #{manName} AS manName ,
+			   #{manTel} AS manTel ,
+			   #{manAddr} AS manAddr ,
+			   #{remark} AS remark ,
+			   #{codeChk} AS codeChk
+	</select>
+	
+	<!-- 거래처코드 중복 찾기 -->
+	<select id="getCustCode" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0023VO" resultType="kr.co.igns.business.baseInfo.bas0020.model.Bas0023VO" >
+		select * from bas0023
+		where com_code = #{comCode}
+		  and cust_code = #{custCode}
+	</select>
+	
+	<!-- 거래처 업로드 저장 -->
+	<insert id="ctAccountInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0023VO">	 	
+    	INSERT INTO bas0023
+		(
+			  com_code
+			, cust_code
+			, cust_name
+			, cust_type
+			, mat_type
+			, cust_no
+			, name
+			, con_type			
+			, sec_type			
+			, post_no			
+			, addr			
+			, tel			
+			, fax			
+			, email			
+			, man_name			
+			, man_tel			
+			, man_addr			
+			, user_flag			
+			, remark			
+			, make_date			
+			, maker	
+		)
+		VALUES
+		(
+			  #{comCode} 
+			, #{custCode}
+			, #{custName}		
+			, #{custType}			
+			, #{matType} 		
+			, #{custNo}  
+			, #{name}     
+			, #{conType}	
+			, #{secType}	
+			, #{postNo}	
+			, #{addr}		
+			, #{tel}		
+			, #{fax}		
+			, #{email}		
+			, #{manName}	
+			, #{manTel}	
+			, #{manAddr}	
+			, 'Y'
+			, #{remark}	
+			, current_date
+			, #{maker}
+		)
+    </insert>
+    
+    <!-- 품목정보 업로드 정보 -->
+	<select id="getPartTypeInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0040VO" resultType="kr.co.igns.business.baseInfo.bas0020.model.Bas0040VO">
+		SELECT #{id} AS id ,
+			   #{comCode} AS comCode ,
+			   #{partNo} AS partNo ,
+			   #{partName} AS partName ,
+			   #{spec} AS spec ,
+			   #{itemType} AS itemType ,
+			   #{partType} AS partType ,
+			   #{unit} AS unit ,
+			   #{inWh} AS inWh ,
+			   #{outWh} AS outWh ,
+			   #{lotSize} AS lotSize ,
+			   #{safeCnt} AS safeCnt ,
+			   #{inInsp} AS inInsp ,
+			   #{proInsp} AS proInsp ,
+			   #{rotInsp} AS rotInsp ,
+			   #{outInsp} AS outInsp ,
+			   #{lastInsp} AS lastInsp ,
+			   #{supInsp} AS supInsp ,
+			   #{leadTime} AS leadTime ,
+			   #{weightYn} AS weightYn ,
+			   #{weight} AS weight ,
+			   #{userDef1} AS userDef1 ,
+			   #{userDef2} AS userDef2 ,
+			   #{userDef3} AS userDef3
+	</select>
+	
+	<select id="partTypeOverlap" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0040VO" resultType="kr.co.igns.business.baseInfo.bas0020.model.Bas0040VO">
+		select * from bas0040
+		where com_code = #{comCode}
+		  and part_no = #{partNo}
+		  and part_name = #{partName}
+		  and unit = #{unit}
+		  and spec = #{spec}
+		  and in_wh = #{inWh}
+		  and out_wh = #{outWh}
+		  and lot_size = #{lotSize}
+	</select>
+	
+	<!-- 품목정보 업로드 저장 -->
+	<insert id="ctPartTypeInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0040VO">
+		INSERT INTO bas0040
+		(
+			com_code
+		  , part_no
+		  , part_name
+		  , spec
+		  , item_type
+		  , part_type
+		  , unit
+		  , in_wh
+		  , out_wh
+		  , lot_size
+		  , safe_cnt
+		  , in_insp
+		  , pro_insp
+		  , rot_insp
+		  , out_insp
+		  , last_insp
+		  , sup_insp
+		  , lead_time
+		  , weight_yn
+		  , weight
+		  , user_def1
+		  , user_def2
+		  , user_def3
+		)
+		VALUES
+		(
+			#{comCode}
+		  , #{partNo}
+		  , #{partName}
+		  , #{spec}
+		  , #{itemType}
+		  , #{partType}
+		  , #{unit}
+		  , #{inWh}
+		  , #{outWh}
+		  , #{lotSize}
+		  , #{safeCnt}
+		  , #{inInsp}
+		  , #{proInsp}
+		  , #{rotInsp}
+		  , #{outInsp}
+		  , #{lastInsp}
+		  , #{supInsp}
+		  , #{leadTime}
+		  , #{weightYn}
+		  , #{weight}
+		  , #{userDef1}
+		  , #{userDef2}
+		  , #{userDef3}
+		)
+	</insert>
+	<!-- BOM정보 업로드 정보 -->
+	<select id="getBomInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0043VO" resultType="kr.co.igns.business.baseInfo.bas0020.model.Bas0043VO">
+		SELECT #{id} AS id ,
+			   #{comCode} AS comCode ,
+			   #{partNo} AS partNo ,
+			   #{pathType} AS pathType ,
+			   #{pathCode} AS pathCode ,
+			   #{pathNo} AS pathNo ,
+			   #{proCode} AS proCode ,
+			   #{level} AS level ,
+			   #{paPartNo} AS paPartNo ,
+			   #{no} AS no ,
+			   #{childPartNo} AS childPartNo ,
+			   #{amount} AS amount ,
+			   #{remark} AS remark
+	</select>
+	
+	<!-- BOM정보 업로드 저장 -->
+	<insert id="ctBomInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0043VO">
+		INSERT INTO bas0043
+		(
+			com_code
+		  , part_no
+		  , path_type
+		  , path_code
+		  , path_no
+		  , pro_code
+		  , level
+		  , pa_part_no
+		  , no
+		  , child_part_no
+		  , amount
+		  , remark
+		  , make_date
+		  , maker
+		)
+		VALUES
+		(
+			#{comCode}
+		  , #{partNo}
+		  , #{pathType}
+		  , #{pathCode}
+		  , #{pathNo}
+		  , #{proCode}
+		  , #{level}
+		  , #{paPartNo}
+		  , #{no}
+		  , #{childPartNo}
+		  , #{amount}
+		  , #{remark}
+		  , current_date
+		  , #{maker}
+		)
+	</insert>
+	<!-- BOM정보 경로정보상세 업로드 저장 -->
+	<insert id="ctBomPathDetailInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0043VO">
+		INSERT INTO bas0042 
+		(
+			com_code
+		  , part_no
+		  , path_type 
+		  , path_code
+		  , path_no
+		  , pro_code
+		  , user_flag
+		  , make_date
+		  , maker
+		)
+		SELECT com_code , 
+		       #{partNo} ,
+		       #{pathType} ,
+		       #{pathCode} ,
+		       proc_no ,
+		       pro_code ,
+		       'Y',
+		       current_date ,
+		       #{maker}
+		  FROM bas0038
+		 WHERE com_code  = #{comCode}
+		   AND path_code = #{pathCode}
+	</insert>
+	<!-- BOM정보 경로유형 저장 -->
+	<insert id="ctBomPathTypeInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0043VO">
+		INSERT INTO bas0041
+		(
+			com_code
+		  , part_no
+		  , path_type
+		  , path_code
+		  , in_whcode
+		  , sort_flag
+		  , remark
+		  , make_date
+		  , maker
+		)
+		VALUES
+		(
+			#{comCode}
+		  , #{partNo}
+		  , #{pathType}
+		  , #{pathCode}
+		  , #{inWhcode}
+		  , #{sortFlag}
+		  , #{remark}
+		  , current_date
+		  , #{maker}
+		)
+	</insert>
+	
+	<!-- 거래처별 품목 정보 -->
+	<select id="getItemByCustInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0044VO" resultType="kr.co.igns.business.baseInfo.bas0020.model.Bas0044VO">
+		SELECT #{id} AS id ,		
+			   #{comCode} AS comCode ,
+			   #{custCode} AS custCode ,
+			   #{partNo} AS partNo ,
+			   #{remark} AS remark
+	</select>
+	
+	<!-- 거래처별 품목정보 저장 -->
+	<insert id="ctItemByCustInfo" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0044VO">
+		INSERT INTO bas0044
+		(
+			  com_code
+			, part_no
+			, cust_code
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{partNo}
+			, #{custCode}
+		)
+	</insert>
+	
+	<!-- 거래처별 품목정보 중복값-->
+	<select id="itemByCustOverlap" parameterType="kr.co.igns.business.baseInfo.bas0020.model.Bas0044VO" resultType="kr.co.igns.business.baseInfo.bas0020.model.Bas0044VO">
+		select * from bas0044
+		where com_code = #{comCode}
+		  and part_no = #{partNo}
+		  and cust_code = #{custCode};
+	</select>
+</mapper>

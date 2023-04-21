@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.LoginDao">
+        
+    <select id="login" parameterType="kr.co.igns.framework.comm.model.LoginReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.LoginVO">
+        select *
+        from bas0022 a 
+        where a.user_id = #{userId}
+          and a.com_code = #{comCode}
+          and a.per_code like '%'||#{perCode}
+    </select>
+    
+    
+    
+</mapper>

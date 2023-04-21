@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0320Dao">
+<!-- 로트병합 저장 -->
+   <insert id="createPro0019" parameterType="kr.co.igns.business.pop.model.Pop0310VO">
+insert into pro0019
+ (
+ com_code
+, fac_code
+, regi_date 
+, lot_type
+, wh_code
+, part_no
+, lot_detail
+, qty
+, amount
+, old_lot_detail
+, old_qty
+, old_amount
+, user_flag
+, make_date
+, maker
+, no
+)
+values
+(
+ #{comCode}
+ ,#{facCode}
+ ,#{regiDate}
+ ,(select sys_code from bas0011 where code = 'LOT_TYPE' and sort_flag = '2')
+ ,#{locCode}
+ ,#{partNo}
+ ,#{lotDetail}
+ ,#{qty}
+ ,#{amount}
+ ,#{oldLotDetail}
+ ,#{oldQty}
+ ,#{oldAmount}
+ ,'Y'
+ ,Now()
+ ,#{maker}
+ ,(select coalesce((max(no::integer)),'0')::integer + 1
+from pro0019)
+)											
+ </insert>
+ 
+   <!-- 로트병합 업데이트 -->
+<update id="updateMat0021" parameterType="kr.co.igns.business.pop.model.Pop0310VO">
+update mat0021
+	 set stock_qty = #{sumQty}
+	,stock_amount = #{sumAmount}
+	,event_cd = '20'
+	,edit_date = now()
+	,editor = #{maker}
+where com_code =#{comCode}
+ 	    and fac_code = #{facCode}
+		and lot_detail = #{lotDetail}
+		and loc_code = #{locCode}
+		and part_no = #{partNo}
+    </update>
+    
+                <!-- 로트될데이터 업데이트 -->
+    <update id="mergedUpdateMat0021" parameterType="kr.co.igns.business.pop.model.Pop0310VO">
+    			update mat0021
+    			 set stock_qty = 0
+    				, stock_amount = 0
+    				, edit_date = now()
+    				, event_cd = '20'
+				where lot_detail = #{oldLotDetail}
+				 and com_code = #{comCode}
+				 and fac_code = #{facCode}
+				 and loc_code = #{locCode}
+				 and part_no = #{partNo}
+    </update>  
+
+    			
+</mapper>

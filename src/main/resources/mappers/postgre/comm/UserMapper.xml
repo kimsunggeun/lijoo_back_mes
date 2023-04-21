@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.UserDao">
+        
+    <!-- 사원 검색 조건   -->    
+    <sql id="search">
+   		
+		<if test='userId != null and !userId.equals("")'>
+			and a.user_id like '%' || #{userId} || '%'
+		</if>
+		<if test='userName != null and !userName.equals("")'>
+			and a.user_name like '%' || #{userName} || '%'
+		</if>
+	</sql>    
+        
+    <!-- 사원정보 조회 -->
+    <select id="findByUserId" parameterType="java.lang.Integer"  
+    					resultType="kr.co.igns.framework.comm.model.UserCertVO">
+		<![CDATA[
+        select
+        		a.user_id,
+				a.user_password AS password,
+				a.user_name AS name,
+				a.com_code,
+				a.per_code
+		from	bas0022 AS a
+		where	a.uuid = #{uuid}
+		]]>
+    </select>    
+        
+    <!-- 사원정보 조회 -->
+    <select id="getUser" parameterType="kr.co.igns.framework.comm.model.UserReqDto" 
+    					resultType="kr.co.igns.framework.comm.model.UserVO">
+        select 	a.com_code
+        		, a.dep_code
+        		, a.user_id
+        		, a.user_name
+        		, a.per_code
+        		, a.type_code
+        		, a.posi_code
+        		, a.fac_code
+        		, a.hp
+        		, a.email
+        		, a.ent_date
+        		, a.lan_code
+        		, a.user_image
+        		, a.remark
+        		, a.user_flag
+        		, a.make_date
+        		, fn_username(a.com_code, a.maker) as maker
+        		, a.edit_date
+        		, fn_username(a.com_code, a.editor) as editor 
+		from bas0022 a
+		where 1=1
+		and a.com_code = #{comCode}
+		  <include refid="search" />
+		order by a.com_code, a.user_id
+    </select>
+
+	<select id="checkByUserId" parameterType="kr.co.igns.framework.comm.model.UserReqDto"  
+    					resultType="int">
+		<![CDATA[
+        select	count(a.user_id)
+		from	bas0022 AS a
+		where	1 = 1
+		and		a.com_code = #{comCode}
+		and		a.user_id = #{userId}
+		]]>
+    </select> 
+    
+	<insert id="createUser" parameterType="kr.co.igns.framework.comm.model.UserVO">
+    	insert into bas0022
+			(com_code
+			, dep_code
+			, user_id
+			, user_name
+			, user_password
+			, per_code
+			, type_code
+			, posi_code
+			, fac_code
+			, hp
+			, email
+			, ent_date
+			, lan_code
+			, user_image
+			, remark
+			, user_flag
+			, make_date
+			, maker
+			)
+		values(
+			#{comCode}
+			, #{depCode}
+			, #{userId}
+			, #{userName}
+			, #{userPassword}
+			, #{perCode}
+			, #{typeCode}
+			, #{posiCode}
+			, #{facCode}
+			, #{hp}
+			, #{email}
+			, #{entDate}
+			, #{lanCode}
+			, #{userImage}
+			, #{remark}
+			, #{userFlag}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <update id="updateUser" parameterType="kr.co.igns.framework.comm.model.UserVO">
+    	update 	bas0022
+		set 	dep_code      	= #{depCode}
+				, user_name     = #{userName}
+				, per_code      = #{perCode}
+				, type_code     = #{typeCode}
+				, posi_code     = #{posiCode}
+				, fac_code		= #{facCode}
+				, hp            = #{hp}
+				, email         = #{email}
+				, ent_date      = #{entDate}
+				, lan_code      = #{lanCode}
+				, user_image	= #{userImage}
+				, remark        = #{remark}
+				, user_flag     = #{userFlag}
+				, edit_date     = now()
+				, editor        = #{editor}
+		where 	com_code 		= #{comCode}
+		and 	user_id 		= #{userId}
+    </update>
+    
+    <update id="updateUserPass" parameterType="kr.co.igns.framework.comm.model.UserVO">
+    	update	bas0022
+		set		user_password 	= #{userChangePassword}
+				, editor		= #{editor}
+				, edit_date		= now()
+		where 	com_code 		= #{comCode} 
+		  and 	user_id 		= #{userId}
+    </update>
+    
+    <delete id="deleteUser" parameterType="kr.co.igns.framework.comm.model.UserVO">
+    	delete from bas0022 
+    	where com_code = #{comCode}
+	  	  and dep_code = #{depCode} 
+	  	  and user_id = #{userId} 
+    </delete>
+    
+    <select id="userDeleteCheck_Bas" parameterType="kr.co.igns.framework.comm.model.UserVO" 
+    								resultType="kr.co.igns.framework.comm.model.UserVO">
+	    select * from bas0040
+	    where com_code = #{comCode}
+	      and maker = #{userId}
+      
+    </select>
+    <select id="userDeleteCheck_Sal" parameterType="kr.co.igns.framework.comm.model.UserVO" 
+    								resultType="kr.co.igns.framework.comm.model.UserVO">
+	    select * from sal0010
+	    where com_code = #{comCode}
+	      and maker = #{userId}
+      
+    </select>
+    <select id="userDeleteCheck_Mat" parameterType="kr.co.igns.framework.comm.model.UserVO" 
+    								resultType="kr.co.igns.framework.comm.model.UserVO">
+	    select * from mat0010
+	    where com_code = #{comCode}
+	      and maker = #{userId}
+    </select>
+    <select id="userDeleteCheck_Pro" parameterType="kr.co.igns.framework.comm.model.UserVO" 
+    								resultType="kr.co.igns.framework.comm.model.UserVO">
+	    select * from pro0022
+	    where com_code = #{comCode}
+	      and user_id = #{userId}
+    </select>
+    
+</mapper>

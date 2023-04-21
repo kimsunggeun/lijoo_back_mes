@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0220Dao">
+        
+	<!-- 창고별 재고현황 조회 -->
+    <select id="getMat0220" parameterType="kr.co.igns.business.mat.model.mat0220.Mat0220ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0220.Mat0220VO">
+		select a.regi_date as regiDate, fn_custname(a.com_code, a.cust_code) as custName, a.ord_no as ordNo , b."no", 
+				b.part_no as partNo,  fn_partname(b.com_code, b.part_no) as partName, fn_partspec(b.com_code, b.part_no) as partSpec,
+				fn_part_unit(b.com_code,b.part_no) as partUnit, b.qty, b.in_qty as inQty, b.ret_qty as retQty, b.rem_qty as remQty, 
+				coalesce(nullif(b.in_qty,'')::numeric / nullif(b.qty,'')::numeric,0) * 100 as remRate,
+				b.price, a.ord_state as ordState
+		from mat0010 a
+		left join mat0011 b on a.com_code = b.com_code and a.fac_code = b.fac_code and a.ord_no = b.ord_no 
+		where a.com_code = #{comCode}
+		and a.fac_code = #{facCode}
+		and a.regi_date between #{frRegiDate} and #{toRegiDate}
+		and a.ord_state > '10'
+		
+		<if test="custCode != null and custCode != ''">
+			and a.cust_code = #{custCode}
+		</if>
+		<if test="partNo != null and partNo != ''">		
+			and b.part_no like CONCAT('%',#{partNo},'%')
+		</if>
+		<if test="partName != null and partName != ''">		
+			and b.part_no in (select fn_partnamesearch(b.com_code, #{partName}))
+		</if>
+		<if test="ordNo != null and ordNo != ''">
+			and a.ord_no like '%'||#{ordNo}||'%'
+		</if>		
+		<if test="ordState != null and ordState != ''">
+			and a.ord_state = #{ordState}
+		</if>
+		
+		order by custName, ordNo, "no"
+    </select>
+    
+</mapper>

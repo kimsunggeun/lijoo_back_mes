@@ -1,0 +1,476 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0210Dao">
+	<select id="getPop0020" parameterType="kr.co.igns.business.pop.model.pro0020ReqDto" resultType="kr.co.igns.business.pop.model.pro0020VO" >
+		select (row_number() over()) as rowNum, aa.*
+		from (
+		select a.com_code as comCode, a.fac_code as facCode, a.user_id as userId, a.work_decode as workDecode, 
+				b.work_code as workCode, fn_workdename(a.com_code,a.fac_code,b.work_code,b.work_decode) as workDename, 
+				fn_workname(a.com_code,a.fac_code,b.work_code) as workName,
+				b.sort_flag as deSort, c.sort_flag as workSort
+		from pro0020 a 
+		left join bas0035 b on a.com_code = b.com_code and a.fac_code = b.fac_code and a.work_decode = b.work_decode
+		right join bas0034 c on b.com_code = c.com_code  and b.fac_code = c.fac_code and b.work_code = c.work_code 
+		where a.com_code = #{comCode}
+		and a.fac_code = #{facCode}
+		and a.user_id = #{userId}
+		order by workSort, deSort) aa;
+	</select>
+	
+	<update id="setPop0020" parameterType="kr.co.igns.business.pop.model.pro0020VO">
+		INSERT INTO public.pro0020
+		(com_code, fac_code, user_id, work_decode, make_date, maker)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.comCode}, #{item.facCode}, #{item.userId}, #{item.workDecode}, now(), #{item.userId})
+		</foreach>
+		;	
+	</update>
+	
+	<delete id="delPop0020" parameterType="kr.co.igns.business.pop.model.pro0020VO">
+		DELETE FROM pro0020
+		WHERE com_code = #{comCode} 
+		  AND fac_code = #{facCode} 
+		  AND user_id = #{userId};
+	</delete>
+	
+	<select id="getPop0021" parameterType="kr.co.igns.business.pop.model.Pro0021ReqDto" resultType="kr.co.igns.business.pop.model.Pro0021VO" >
+		select a.com_code as comCode
+		     , a.fac_code as facCode
+		     , a.work_code as workCode
+		     , a.work_decode as workDecode
+		     , a.ilno
+		     , a.work_type as workType
+		     , a.met_gbn as metGbn
+		     , a.work_crew as workCrew
+		     , a.work_date as workDate
+		     , a.work_no as workNo
+		     , c.part_no as partNo
+		     , fn_partname(c.com_code,c.part_no) as partName
+		     , c.path_code as pathCode
+		     , fn_pathcodename(c.com_code, c.fac_code, c.path_code) as pathName
+		     , a.lot_no as lotNo
+		     , a.remark
+		     , c.order_qty as orderQty
+		     , (select string_agg(b.user_id::text,',') 
+				  from pro0022 b 
+             	 right join bas0022 c on b.com_code = c.com_code and b.user_id = c.user_id
+             	 where b.com_code = a.com_code and b.fac_code = a.fac_code and b.ilno = a.ilno and c.user_id is not null) as worker
+             , (select string_agg(fn_username(a.com_code,b.user_id)::text,',') 
+				  from pro0022 b 
+				 where b.com_code = a.com_code and b.fac_code = a.fac_code and b.ilno = a.ilno) as workerName
+			 , fn_get_planqty(a.com_code, a.fac_code, c.work_no, a.work_code, c.path_code) as planQty
+			 , a.make_date, c.make_date as makeTime
+			 , d.in_wh as whCode
+			 , b.lot_size as lotSize
+		  from pro0021 a
+		  left join pro0010 c
+		         on a.com_code = c.com_code
+		        and a.fac_code = c.fac_code
+		        and a.work_no = c.work_no
+		  left join bas0040 b
+               on b.com_code = a.com_code               
+              and b.part_no = c.part_no
+	     inner join bas0035 d
+                 on d.com_code = a.com_code 
+                and d.fac_code = a.fac_code 
+                and d.work_code = a.work_code
+                and d.work_decode = a.work_decode
+		 where a.com_code = #{comCode}
+		   and a.fac_code = #{facCode}
+		   and a.work_code = #{workCode}
+		   and a.work_decode = #{workDecode}
+	     order by ilno desc
+		LIMIT 1
+		;	
+		
+	</select>
+	
+	<update id="setPop0021" parameterType="kr.co.igns.business.pop.model.Pro0021VO">
+			WITH UPSERT AS (
+			UPDATE pro0021				
+			   SET
+			   <if test='workType != null and !workType.equals("")'>
+			   work_type = #{workType}, 
+			   </if>
+			   <if test='metGbn != null and !metGbn.equals("")'>
+					met_gbn = #{metGbn}, 
+				</if>
+					work_crew = #{workCrew}, 
+					work_date = #{workDate}, 
+					work_no = #{workNo},  
+					lot_no = #{lotNo}, 
+					remark = #{remark}, 
+					edit_date = now(), 
+					editor= #{maker}
+			  WHERE com_code = #{comCode} 
+				and	fac_code = #{facCode}
+				and work_code = #{workCode} 
+				and work_Decode = #{workDecode} 
+				and ilno = #{ilno} RETURNING * )
+			INSERT INTO pro0021
+			(com_code, fac_code, work_code, work_decode, ilno, work_type, met_gbn, work_crew, work_date, 
+			work_no, lot_no, remark, make_date, maker)
+			select #{comCode}, #{facCode}, #{workCode}, #{workDecode}, 
+				(select to_char(now(),'YYMMDD')|| lpad((coalesce(nullif(right(max(ilno) ,4),''), '0' )::integer + 1)::text, 4, '0')
+					from pro0021
+					where com_code = #{comCode}
+					and fac_code = #{facCode}
+					and left(ilno,6) = to_char(now(),'YYMMDD')),
+			#{workType}, #{metGbn}, #{workCrew}, #{workDate}, #{workNo}, #{lotNo}, #{remark}, now(), #{maker}
+			where not exists (select * from UPSERT);
+	</update>
+	
+	<select id="getPro0022" parameterType="kr.co.igns.business.pop.model.Pro0021ReqDto" resultType="kr.co.igns.business.pop.model.Pro0022VO">
+	  select com_code as comCode, fac_code as facCode, ilno, user_id as userId
+      from pro0022
+      where com_code = #{comCode}
+      and fac_code = #{facCode}
+      and ilno = #{ilno}
+	</select>
+	
+	<!-- 작업자 저장 -->
+	<update id="setPro0022" parameterType="kr.co.igns.business.pop.model.Pro0021VO">
+		do $$
+		declare 
+			v_newilno   text;
+			v_oldilno   text = '${ilno}';
+			v_ilno		text;
+		begin
+		
+			select to_char(now(),'YYMMDD')|| lpad((coalesce(nullif(right(max(ilno) ,4),''), '0' )::integer + 1)::text, 4, '0') into v_newilno
+			from pro0021
+			where com_code = '${comCode}' 
+			and fac_code = '${facCode}'
+			and left(ilno,6) = to_char(now(),'YYMMDD');
+			
+			if v_oldilno is not null and length(v_oldilno) > 0 then
+				v_ilno := v_oldilno;
+
+			else
+				v_ilno := v_newilno;
+				INSERT INTO public.pro0021
+					(com_code, fac_code, work_code, work_decode, ilno, work_type, met_gbn, 
+					 work_crew, work_date, work_no, lot_no, remark, make_date, maker)
+				VALUES
+					('${comCode}', '${facCode}', '${workCode}', '${workDecode}', v_ilno, '${workType}', '${metGbn}',
+					'${workCrew}', '${workDate}', '${workNo}', '${lotNo}', '${remark}', now(), '${maker}');
+			end if;
+						
+			delete from pro0022 where com_code = '${comCode}' and fac_code = '${facCode}' and ilno = v_ilno;
+
+		<foreach collection="userId" index='index' item="item">
+			INSERT INTO public.pro0022
+					(com_code, fac_code, ilno, user_id, make_date, maker)
+			VALUES('${comCode}', '${facCode}', v_ilno, '${item}', now(), '${maker}');
+		</foreach>
+		end $$
+	</update>
+	
+	<!-- 작업지시 팝업  -->
+	<select id="getPro0050" parameterType="kr.co.igns.business.pop.model.Pro0010ReqDto" resultType="kr.co.igns.business.ProdManage.model.pro0050.Pro0050VO">
+		select a.com_code as comCode, a.fac_code as facCode, a.work_no as workNo, a.plan_date as planDate, a.work_date as workDate,
+			   a.work_code as workCode, fn_workname(a.com_code, a.fac_code, a.work_code) as workName,
+			   a.work_decode as workDecode, fn_workdename(a.com_code, a.fac_code, a.work_code, work_decode) as workDeName,
+			   a.order_state as orderState, fn_comcodenm(a.com_code, 'ORDER_STATE', a.order_state) as orderStateNm,
+			   a.pri_code as priCode, fn_comcodenm(a.com_code, 'PRI_CODE', a.pri_code) as priCodeNm,
+			   a.path_code as pathCode, fn_pathcodename(a.com_code, a.fac_code, a.path_code) as pathName,
+			   a.work_crew as workCrew, a.part_no as partNo, fn_part_item_type(a.com_code, a.part_no) as itemType, 
+			   fn_partname(a.com_code,a.part_no) as partName, fn_partspec(a.com_code, a.part_no) as partSpec, 
+			   a.order_qty as orderQty, lot_no as lotNo, a.remark, a.plan_no as planNo,
+			   fn_proName(a.com_code, a.fac_code, c.pre_pro_code) as preProCode, c.pre_qty::text as preQty,
+			   fn_proName(a.com_code, a.fac_code, d.pro_code) as proCode, d.qty::text as qty
+		from pro0010 a
+		left join (
+            	     select distinct coalesce(sum(qty::integer), 0) as pre_qty
+            	          , work_no
+            	          , com_code
+            	          , fac_code
+            	          , pro_code as pre_pro_code
+                       from pro0026
+                      where com_code = #{comCode}
+                        and fac_code = #{facCode}
+                        and coalesce(def_code, '') = ''   
+                        and pro_code in (
+                                          select distinct a.pro_code
+                                            from bas0038 a
+                                           inner join (
+                                                        select distinct a1.com_code
+                                                             , a1.fac_code
+                                                             , a1.path_code
+                                                             , (a1.proc_no::integer - 1)::text as proc_no
+                                                          from bas0038 a1
+                                                         where a1.com_code = #{comCode}
+                                                           and a1.fac_code = #{facCode}
+                                                           and a1.pro_code = #{workCode}
+                                                       ) b
+                                                   on b.com_code = a.com_code 
+                                                  and b.fac_code = a.fac_code
+                                                  and b.path_code = a.path_code
+                                                  and b.proc_no = a.proc_no 
+                                           where a.com_code = #{comCode}
+                                             and a.fac_code = #{facCode}
+                                        )
+                      group by com_code, fac_code, pro_code, work_no
+                     having sum(qty::integer) > 0
+            	  ) c 
+               on a.com_code = c.com_code
+              and a.fac_code = c.fac_code
+              and a.work_no = c.work_no
+		left join (
+		             select distinct coalesce(sum(qty::integer), 0) as qty
+		                  , work_no
+		                  , com_code 
+		                  , fac_code
+		                  , pro_code as pro_code
+                       from pro0026
+                      where com_code = #{comCode}
+                        and fac_code = #{facCode}
+                        and coalesce(def_code, '') = ''
+                        and pro_code = #{workCode}
+                      group by com_code, fac_code, pro_code, work_no
+                      having sum(qty::integer) > 0
+		          ) d
+		       on d.com_code = a.com_code
+		      and d.fac_code = a.fac_code
+		      and d.work_no = a.work_no
+		where a.com_code = #{comCode}
+		and a.fac_code = #{facCode}
+		and a.order_state between left(#{orderState},2) and right(#{orderState},2)
+		and a.path_code IN (select path_code from bas0038 b 
+					         where b.com_code = a.com_code 
+					           and b.fac_code = a.fac_code 
+					           and b.pro_code = #{workCode})
+		<if test='planDate != null and !planDate.equals("")'>
+			and a.plan_date = #{planDate}
+		</if>
+		<if test='workCrew != null and !workCrew.equals("")'>
+			and a.work_crew = #{workCrew}
+		</if>	
+		and ( coalesce(c.pre_qty, 0) = 0
+		     or 
+		     (coalesce(c.pre_qty, 0) != 0 and coalesce(c.pre_qty, 0) > coalesce(d.qty, 0))
+		    )		
+		<!-- and a.work_code = #{workCode} -->				
+	
+	</select>
+	
+	<!-- 진행중인 데이터 보류로 변경  -->
+	<update id="setPro0050_before" parameterType="kr.co.igns.business.pop.model.Pro0010ReqDto">
+		<!-- 작업지시 상태 변경 -->
+		UPDATE pro0010
+		SET order_state = '40'
+		WHERE com_code = #{comCode}
+		  AND fac_code = #{facCode} 
+		  AND work_code = #{workCode}
+		  AND work_decode = #{workDecode}
+		  AND order_state = '30'
+	</update>
+	
+	
+	<!-- 작업지시 팝업 저장  -->
+	<update id="setPro0050" parameterType="kr.co.igns.business.pop.model.Pro0010ReqDto">
+		<!-- 작업지시 상태 변경 -->
+		UPDATE pro0010
+		SET order_state = #{btnOrderState}
+		<if test='btnOrderState.equals("30")'>
+			,plan_date = left(now()::text,10)
+			,work_date = left(now()::text, 10)
+		</if>
+		WHERE com_code = #{comCode}
+		  AND fac_code = #{facCode} 
+		  AND work_no = #{workNo};
+	</update>
+	
+	<!-- 실적/불량등록 -->
+	<update id="setPro0025" parameterType="kr.co.igns.business.pop.model.Pro0025ReqDto">
+		call sp_set_proc_add(#{comCode}, #{facCode}, #{ilNo}, #{whCode}, #{workCode}, #{proType}, #{defCode}, #{userId}, #{inputQty}, #{box}, #{qty});
+	</update>
+	
+	<!-- 선택자재 투입  팝업-->
+	<select id="getPro23Select" parameterType="kr.co.igns.business.pop.model.Pro0023ReqDto"  resultType="kr.co.igns.business.pop.model.Pop0023VO">
+        select a.part_no as partNo, fn_partname(a.com_code,a.part_no) as partName,
+		(select b.loc_name as locName from bas0033 b where b.com_code = a.com_code 
+		and b.fac_code=a.fac_code and b.loc_code = a.loc_code) as whName,
+		a.lot_no as lotNo, a.lot_detail as lotDetail, a.stock_qty,
+		a.regi_date as inDate
+		from mat0021 a
+		left join bas0040 b on a.com_code = b.com_code and a.part_no = b.part_no
+		where a.com_code = #{comCode}
+		and	a.fac_code = #{facCode}
+		and b.part_type between '10' and '20'
+		and a.stock_qty != '0'
+		and a.loc_code != #{workDecode};
+	</select>
+	
+	<!-- 자재투입 -->
+	<update id="setPro0023" parameterType="kr.co.igns.business.pop.model.Pro0023ReqDto">
+	do $$
+	declare
+		v_stock_qty		text := '0';
+		v_part_no		text := '_blank';
+		
+	begin	
+		select part_no, stock_qty into v_part_no, v_stock_qty
+		from mat0021
+		WHERE com_code = '${comCode}'
+		AND fac_code = '${facCode}' 
+		AND lot_detail = '${lotDetail}';
+				
+		UPDATE public.mat0021
+			SET loc_code = '${workDecode}',
+				edit_date = now(), 
+				editor = '${userId}'
+		WHERE com_code = '${comCode}'
+		AND fac_code = '${facCode}' 
+		AND lot_detail = '${lotDetail}';
+		 
+		with upsert20 as (
+				update	mat0020
+				set		stock_qty = ( select sum(stock_qty::integer) as stock_qty
+										from mat0021
+										where com_code = '${comCode}'
+										and fac_code = '${facCode}'
+										and part_no = v_part_no
+										and loc_code = '${workDecode}'),
+						edit_date = now(),
+						editor = '${userId}'				
+			where 	com_code =  '${comCode}'
+			and 	fac_code = '${facCode}'
+			and 	part_no = v_part_no
+			and 	loc_code = '${workDecode}' returning * )
+			insert into public.mat0020
+			(com_code, fac_code, loc_code, part_no, stock_qty, stock_amount, make_date, maker)
+			select '${comCode}', '${facCode}', '${workDecode}', v_part_no, v_stock_qty, fn_average_price('${comCode}', v_part_no), 
+					now(), '${userId}'						
+		where not exists (select * from upsert20);
+
+	end $$;
+	</update>
+	
+	<!-- 투입된 자재 조회 -->
+	<select id="getPro0023" parameterType="kr.co.igns.business.pop.model.Pro0023ReqDto" resultType="String">
+		select public.fn_getpro0023(#{comCode},#{facCode},#{workCode},#{workDecode},#{ilno});
+	</select>
+	
+	<!-- 작업이력 탭 조회 -->
+	<select id="getPro0025" parameterType="kr.co.igns.business.pop.model.Pro0025ReqDto" resultType="kr.co.igns.business.pop.model.Pro0025VO">
+		select  to_char(a.make_date, 'YYYY-MM-DD') as workDate
+		      , a.work_no as workNo
+		      , a.part_no as partNo
+		      , fn_partname(a.com_code, a.part_no) as partName
+		      , fn_partspec(a.com_code, a.part_no) as partSpec
+		      , fn_comcodenm(a.com_code,'PRO_TYPE',a.pro_type) as proType
+		      , fn_comcodenm(a.com_code,'DEF_CODE', a.def_code) as defCode
+		      , a.lot_no as lotNo
+		      , a.lot_detail as lotDetail
+		      , a.qty
+		      , to_char(a.make_date,'MM-DD HH24:mm') workTime
+		      , fn_workname(a.com_code, a.fac_code, a.work_code) as workName
+		      , fn_workdename(a.com_code, a.fac_code, a.work_code, a.work_decode) as workDename
+		      , a.ilno
+		      , fn_pro_username(a.com_code, a.fac_code ,a.ilno) as userName
+		      , c.order_state as orderState
+		      , fn_comcodenm(a.com_code, 'ORDER_STATE', c.order_state) as orderStateName
+		      , case when c.order_state != '60' then '공정이동표' else '부품식별표' end as repName
+		      , a.com_code as comCode
+		      , a.fac_code as facCode
+		from pro0026 a		
+		left join pro0010 c 
+		       on a.com_code = c.com_code
+		      and a.fac_code = c.fac_code
+		      and a.work_no = c.work_no
+	   where a.com_code = #{comCode}
+		 and a.fac_code = #{facCode}
+		 and to_char(a.make_date, 'YYYY-MM-DD') between #{frDate} and #{toDate}
+		<if test='workCode != null and !workCode.equals("")'>
+			and a.work_code = #{workCode}
+		</if>
+		<if test='orderState != null and !orderState.equals("")'>
+			and c.order_state  = #{orderState}	
+		</if>
+		
+	</select>
+	
+	<!-- 작업이력 조회 실적등록 옆 -->
+	<select id="getPro0026" parameterType="kr.co.igns.business.pop.model.Pro0025ReqDto" resultType="kr.co.igns.business.pop.model.Pro0025VO">
+		select 	to_char(a.make_date,'MM-DD HH24:mm') workTime, 
+				fn_comcodenm(a.com_code,'PRO_TYPE',a.pro_type) as proType, fn_comcodenm(a.com_code,'DEF_CODE', a.def_code) as defCode,
+				a.part_no as partNo, fn_partname(a.com_code, a.part_no) as partName, fn_partspec(a.com_code, a.part_no) as partSpec,
+				a.qty, a.lot_no as lotNo, a.lot_detail as lotDetail, a.ilno,
+				fn_workname(a.com_code, a.fac_code, b.work_code) as workName, fn_workdename(a.com_code, a.fac_code, b.work_code, b.work_decode) as workDename,
+				b.work_crew, fn_comcodenm(a.com_code, 'WORK_TYPE', b.work_crew) as workCrewName, fn_pro_username(a.com_code, a.fac_code, a.ilno) as userName,
+				b.order_state as orderState, fn_comcodenm(a.com_code, 'ORDER_STATE', b.order_state) as orderStateName,
+				case when b.order_state != '60' then '공정이동표' else '부품식별표' end as repName, b.work_decode,a.com_code as comCode, a.fac_code as facCode,
+				a.work_decode as workDecode
+		from 	pro0026 a		
+		left join pro0010 b on b.com_code = a.com_code and b.fac_code = a.fac_code and b.work_no = a.work_no and b.work_decode = a.work_decode
+		where 	a.com_code = #{comCode}
+		and 	a.fac_code = #{facCode}
+		and 	a.work_no = #{workNo}
+		and     a.work_code = #{workCode}
+		and 	a.cancel_flag = 'N'
+		and 	a.user_flag = 'Y'
+		order by a.make_date desc;
+	</select>
+	
+	<!--  살적 등록 취소 -->
+	<update id="getBack" parameterType="kr.co.igns.business.pop.model.Pro0023ReqDto">
+		do $$
+		declare 
+			v_str   text := '';
+			v_disYN text := 'N';
+		begin
+			<!-- 자재불출 설정 유무 확인하는 로직 들어가야함 -->
+		    select user_flag into v_disYN
+              from sys0031
+             where com_code = '${comCode}'
+               and const_type = '6';
+		    
+		    if v_disYN = 'Y' then
+		    	<!-- 자재 업데이트 -->
+		    	call sp_set_proc_cancel_mat('${comCode}', '${facCode}', '${ilno}', '${whCode}', '${lotDetail}', '${userId}');
+		    end if;
+			
+			<!--  실적 삭제 -->
+			call sp_set_proc_cancel('${comCode}', '${facCode}', '${ilno}', '${workNo}', '${lotDetail}', '${userId}');
+		
+		end $$; 
+	</update>
+	
+	<!-- 이전 실적 수량 비교 -->
+	<select id="getProcChk" parameterType="kr.co.igns.business.pop.model.Pro0025ReqDto"  resultType="kr.co.igns.business.pop.model.Pro0025errorVO">
+		select fn_get_bfpro_qty(#{comCode}, #{facCode}, #{workNo}, #{workCode}, #{pathCode}, #{qty}) as error;
+	</select>
+	
+	<!-- 다음 실적 수량 비교 (취소 시) -->
+	<select id="getafProcChk" parameterType="kr.co.igns.business.pop.model.Pro0025ReqDto"  resultType="kr.co.igns.business.pop.model.Pro0025errorVO">
+		select fn_get_afpro_qty(#{comCode}, #{facCode}, #{workNo}, #{workCode}, #{pathCode}, #{proSumQty}) as error;
+	</select>
+	
+	<!-- 자재 수량 비교 (등록 시) -->
+	<select id="getMatChk" parameterType="kr.co.igns.business.pop.model.Pro0025ReqDto"  resultType="kr.co.igns.business.pop.model.Pro0025errorVO">	    
+		select case when (select user_flag
+                            from sys0031
+                           where com_code = #{comCode}
+                             and const_type = '6') = 'Y' then fn_pro_chk(#{comCode}, #{facCode}, #{ilNo}, #{whCode}, #{workCode}, #{qty})
+                    else ''
+               end as error;
+	</select>
+	
+	<!-- 작업이력 자재이력 그리드 -->
+	<select id="getPro0024" parameterType="kr.co.igns.business.pop.model.Pro0025ReqDto"  resultType="kr.co.igns.business.pop.model.Pro0024VO">	    
+		select com_code as comCode
+             , fac_code as facCode
+             , part_no as partNo
+             , fn_partname(com_code, part_no) as partName
+             , mat_lot_detail as matLot
+             , mat_qty as matQty
+          from pro0024
+         where com_code = #{comCode}
+           and fac_code = #{facCode}
+           and pro_lot_detail = #{lotDetail}
+	</select>
+	
+</mapper>

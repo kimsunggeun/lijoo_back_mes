@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0430Dao">
+    
+	<!-- 기타출고등록 정보 조회 -->
+    <select id="getPop0430" parameterType="kr.co.igns.business.pop.model.Pop0430ReqDto" 
+    						resultType="kr.co.igns.business.pop.model.Pop0430VO">
+        select row_number() over(order by a.ilno asc, a.no asc) as id, a.*
+		from sal0125 a
+		where 1=1
+		<if test="comCode != null and comCode != ''">
+			and a.com_code = #{comCode}
+		</if>
+		<if test="facCode != null and facCode != ''">
+			and a.fac_code = #{facCode}
+		</if>				
+		<if test="startDate != null and startDate != ''">
+		<![CDATA[
+		   and a.out_date >= #{startDate}
+		]]>		   		   
+		</if>
+		<if test="endDate != null and endDate != ''">
+		<![CDATA[
+		   and a.out_date <= #{endDate}
+		]]>		   
+		</if>
+		order by a.ilno asc, a.no asc			
+    </select>
+    
+    <!-- 출하검사여부 조회 -->
+    <select id="getOutInsp" parameterType="kr.co.igns.business.pop.model.Pop0430ReqDto" 
+    						resultType="String">
+    	select	a.out_insp
+    	  from	bas0040 a
+    	 where	1=1
+		<if test="comCode != null and comCode != ''">
+			and a.com_code = #{comCode}
+		</if>
+			and a.part_no = #{partNo}   	 
+    </select>
+    
+    <!-- 기타출고등록 정보 삽입 -->
+    <insert id="createPop0430" parameterType="kr.co.igns.business.pop.model.Pop0430VO">
+    	insert into sal0125
+			( com_code
+			, fac_code
+			, ilno
+			, no
+			, out_date
+			, out_insp_yn
+			, cust_code
+			, part_no
+			, lot_no
+			, lot_detail
+			, stock_qty
+			, qty
+			, price
+			, amount
+			, close_month
+			, close_yn
+			, confirm_yn
+			, remark
+			, make_date
+			, maker
+			, edit_date
+			, editor
+			)
+		values
+			( #{comCode}
+			, #{facCode}
+			, #{ilNo}
+			, #{no}
+			, to_char(now(),'YYYY-MM-DD')
+			, #{outInspYn}
+			, #{custCode}
+			, #{partNo}
+			, #{lotNo}
+			, #{lotDetail}
+			, #{stockQty}
+			, #{outQty}
+			, #{price}
+			, #{amount}
+			, #{closeMonth}
+			, #{closeYn}
+			, #{confirmYn}
+			, #{remark}
+			, now()
+			, #{maker}
+			, now()
+			, #{editor}
+			)
+    </insert>
+
+	<!-- 거래처별 품목 정보 조회 -->
+    <select id="getItemListWithCustCode" parameterType="kr.co.igns.business.pop.model.Pop0430ReqDto" 
+    						resultType="String">
+        select a.part_no
+		from bas0044 a
+		where 1=1
+		<if test="comCode != null and comCode != ''">
+			and a.com_code = #{comCode}
+		</if>				
+		<if test="custCode != null and custCode != ''">
+			and a.cust_code = #{custCode}	   		   
+		</if>			
+    </select>
+
+</mapper>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.framework.comm.dao.postgre.MenuStatisticsDao">
+        
+    <!-- 메뉴 접속 통계 조회 -->
+    <select id="getMenuStatistics" parameterType="kr.co.igns.framework.comm.model.MenuStatisticsReqDto" resultType="kr.co.igns.framework.comm.model.MenuStatisticsVO">
+		<![CDATA[
+       	select	row_number() over() AS id,
+				t1.com_code,
+				t1.user_id,
+				t2.user_name,
+				t1.menu_code,
+				--t3.menu_name,
+				coalesce(
+					(
+					select max(menu_name) 
+					from sys0010 
+					where menu_code = t3.module_code
+					and lan_code = #{lanCode}
+					) || ' - ' || t3.menu_name , t1.menu_code
+				) as menu_name,
+				t1.cnnt_cnt,
+				t1.cnnt_date,
+				t1.insert_date,
+				coalesce(t1.update_date, t1.insert_date) as update_date 
+		from 	sys0110 t1
+		left join (
+			select 	a.com_code,
+					a.user_id,
+					b.pa_decode || '(' || b.dep_name || ') - ' ||  a.user_name || ' ' || coalesce(c.sys_name, '') as user_name 
+			from 	bas0022 a
+			left join bas0021 b on a.com_code = b.com_code and a.dep_code  = b.dep_code
+			left join bas0011 c on a.com_code = c.com_code and c.code = 'PSNT' and a.posi_code = c.sys_code
+		) t2 on t1.com_code = t2.com_code and t1.user_id = t2.user_id
+		left join sys0010 t3 on t1.com_code = t3.com_code and t1.menu_code = t3.menu_code and t3.lan_code = #{lanCode}
+       	where 	t1.com_code = #{comCode}
+       	and		t1.cnnt_date between #{dateFrom} and #{dateTo}
+		]]>
+		<if test='userName != null and !userName.equals("")'>
+		and 	t2.user_name like '%' || #{userName} || '%' 
+		</if>
+		<if test='menuName != null and !menuName.equals("")'>
+		and		t3.menu_name like '%' || #{menuName} || '%'
+		</if>
+		order by update_date desc
+    </select>    
+        
+    <!-- 메뉴 접속 통계 수집 -->
+	<insert id="saveMenuStatistics" parameterType="kr.co.igns.framework.comm.model.MenuStatisticsReqDto">
+		with upsert as(
+			update 	sys0110 
+			set		cnnt_cnt = cnnt_cnt + 1,
+		      		module_code = #{moduleCode},
+		      		update_date = now(),
+		      		update_user_id = #{userId},
+			  		lmnt_mac_adrs = #{macAdrs}
+			where 	com_code = #{comCode}
+			and 	user_id = #{userId}
+			and 	menu_code = #{menuCode}
+			and 	cnnt_date = #{cnntDate}
+			returning *
+		)
+		insert into sys0110
+		(
+				com_code
+				, user_id
+				, menu_code
+				, cnnt_date
+				, module_code
+				, cnnt_cnt
+				, insert_user_id
+				, insert_date
+				, rgst_mac_adrs
+		)
+		select 	#{comCode}, #{userId}, #{menuCode}, #{cnntDate}, #{moduleCode}, 1, #{userId}, now(), #{macAdrs}
+		where not exists (select * from upsert)
+    </insert>
+    
+</mapper>

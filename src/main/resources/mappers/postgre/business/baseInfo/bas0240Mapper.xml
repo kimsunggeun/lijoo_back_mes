@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.baseInfo.bas0240.dao.postgre.Bas0240Dao">
+
+	<!-- 작업표준서관리 조회 -->
+	<select id="getDataList" parameterType="kr.co.igns.business.baseInfo.bas0240.model.Bas0240Dto" resultType="kr.co.igns.business.baseInfo.bas0240.model.Bas0070VO">
+		select 	a.pro_code, a.pro_name, a.up_type,
+				b.com_code, b.up_file_name, b.up_file_size
+		from (
+			select 	row_number() over(order by sort_flag) as id,
+					pro_code, pro_name, #{upType} as up_type
+			from 	bas0031
+		) a
+		left join bas0070 b on a.pro_code = b.pro_code
+		and 	b.com_code = #{comCode}
+		and 	b.up_type = a.up_type
+		order by id
+    </select>
+    
+   	<!-- 작업표준서관리 Create -->
+    <insert id="createData" parameterType="kr.co.igns.business.baseInfo.bas0240.model.Bas0070VO">
+    	insert into bas0070
+		(
+			  com_code
+			, up_type
+			, pro_code
+			, up_file_name
+			, up_file_size
+			, make_date
+			, maker
+		)
+		values
+		(
+			  #{comCode}
+			, #{upType}
+			, #{proCode}
+			, #{upFileName}
+			, #{upFileSize}
+			, now()
+			, #{maker}
+		)
+    </insert>
+	
+	<!-- 작업표준서관리 Update -->
+    <update id="updateData" parameterType="kr.co.igns.business.baseInfo.bas0240.model.Bas0070VO">
+    	update bas0070
+		   set edit_date  	= now()
+			 , editor	  	= #{editor}
+		 where com_code	  	= #{comCode}
+		   and up_type 	  	= #{upType} 
+		   and pro_code   	= #{proCode} 
+		   and up_file_name = #{upFileName} 
+    </update>
+     
+     
+     <!-- 작업표준서관리 delete -->
+    <delete id="deleteData" parameterType="kr.co.igns.business.baseInfo.bas0240.model.Bas0070VO">
+	   	delete from bas0070 
+	   	where com_code	  	= #{comCode}
+		  and up_type 	  	= #{upType} 
+		  and pro_code   	= #{proCode} 
+		  and up_file_name 	= #{upFileName} 
+    </delete>
+</mapper>

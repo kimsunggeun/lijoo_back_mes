@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.qat.dao.postgre.Qat0060Dao">
+	
+	<!-- 출하전표 조회 -->
+    <select id="getQat0060" parameterType="kr.co.igns.business.qat.model.qat0060.Qat0060Dto" 
+    					resultType="kr.co.igns.business.qat.model.qat0060.Qat0060VO">
+        with grp_sal0120 as 
+		(
+		   select com_code
+		       , fac_code
+		       , ord_no
+		       , no
+		       , ilno
+		       , out_date
+		       , part_no
+		       , cust_code
+		       , sum(qty::int)::text      as qty
+		       , out_insp_yn
+		       , maker
+		       , make_date
+		       , editor
+		       , edit_date
+		       , remark  
+		    from sal0120
+		   where 1=1
+		   group by com_code, fac_code, ord_no, no, ilno, out_date, part_no, cust_code, out_insp_yn, maker, make_date, editor, edit_date, remark 
+		)
+		select row_number() over(order by a.ord_no, a.no) as id
+			 , a.com_code
+		     , a.fac_code
+		     , a.ord_no
+		     , a.no
+		     , a.ilno
+		     , a.out_date
+		     , fn_custname(a.com_code, a.cust_code) as cust_name
+		     , a.part_no
+		     , b.part_name
+		     , b.spec
+		     , a.qty
+		     , fn_comcodenm(a.com_code, 'UNIT', b.unit) as unit
+		     , a.out_insp_yn
+		     , a.maker
+		     , a.make_date
+		     , a.editor
+		     , a.edit_date
+		     , a.remark		     
+		  from grp_sal0120 a
+		  join bas0040 b on a.com_code = b.com_code
+		               and a.part_no = b.part_no
+		  where a.out_insp_yn = 'Y'
+			<if test="comCode != null and comCode != ''">
+		 		<![CDATA[
+					AND a.com_code = #{comCode}
+				]]>
+		 	</if>
+		 	<if test="facCode != null and facCode != ''">
+		 		<![CDATA[
+					AND a.fac_code = #{facCode}
+				]]>
+		 	</if>
+		 	<if test="custCode != null and custCode != ''">
+		 		<![CDATA[
+					AND a.cust_code = #{custCode}
+				]]>
+		 	</if>
+		 	<if test="partType != null and partType != ''">
+		 		<![CDATA[
+					AND b.part_type = #{partType}
+				]]>
+		 	</if>
+		 	<if test="partName != null and partName != ''">
+		 		<![CDATA[
+					AND upper(b.part_name) like '%' || upper(#{partName}) || '%'
+				]]>
+		 	</if>
+		 	<if test="frDate != null and frDate != '' and toDate != null and toDate != ''" >
+				<![CDATA[
+					AND a.out_date between #{frDate} and #{toDate}
+				]]>
+			</if>
+    </select>
+
+    <select id="getInspection" parameterType="kr.co.igns.business.qat.model.qat0060.QatOutStatusDto" resultType="kr.co.igns.business.qat.model.qat0060.Qat0060VO">
+		select	row_number() over() as id
+			  , b.serial_no
+			  , b.ilno
+			  , a.com_code 
+			  , a.part_no
+			  , c.part_name
+			  , a.insp_no
+			  , a.ins_type
+			  , a.ins_meth
+			  , a.jug_codeh
+			  , a.ins_unit
+			  , a.ins_base
+			  , a.ins_upp
+			  , a.ins_low
+			  , a.ins_cnt
+			  , a.ins_code
+			  , a.remark
+			  , a.make_date
+			  , a.maker
+			  , a.edit_date
+			  , a.editor
+			  , b.judge
+			  , b.sample1
+			  , b.sample2
+			  , b.sample3
+			  , b.sample4
+			  , b.sample5
+			  , #{ilno}  AS dlv_no
+			  , #{facCode} AS facCode
+			  , #{ordNo} AS ordNo
+			  , #{no} AS dlv_seq
+			  , b.make_date
+			  , b.maker
+			  , b.editor
+			  , b.edit_date
+			  , b.insp_time
+		from 	bas0061 a
+		left join 	qat0010 b 
+			 on 	a.com_code = b.com_code
+			 and 	a.part_no = b.part_no 
+			 and 	a.insp_no = b.insp_no 
+			 and 	a.ins_code = b.ins_code
+			 and 	a.ins_type = b.ins_type
+			 and 	a.ins_meth = b.ins_meth
+			 and 	b.fac_code = #{facCode}
+			 and 	b.dlv_no = #{ilno}
+		join bas0040 c on a.com_code = c.com_code and a.part_no  = c.part_no	 
+		where 	a.com_code = #{comCode}
+		and 	a.part_no = #{partNo}
+		and 	a.user_flag = 'Y'
+		and		a.ins_code = #{insCode}
+		order by id 
+    </select>
+
+
+    <select id="selectIlno" parameterType="kr.co.igns.business.qat.model.qat0060.Qat0060VO" resultType="string">
+		select fn_get_ilno(#{comCode}, #{facCode}, #{insCode}, #{dlvNo}, #{dlvSeq}, #{poNo}, #{poSeq});
+    </select>
+
+    <insert id="createQat0060" parameterType="kr.co.igns.business.qat.model.qat0060.Qat0060VO">
+		insert into public.qat0010
+		(
+			  com_code
+			, fac_code
+			, ilno
+			, serial_no
+			, insp_date
+			, part_no
+			, insp_no
+			, ins_code
+			, ins_type
+			, ins_meth
+			, jug_codeh
+			, ins_unit
+			, judge
+			, sample1
+			, sample2
+			, sample3
+			, sample4
+			, sample5
+			, remark
+			, make_date
+			, maker
+			, insp_time
+			, dlv_no
+			, dlv_seq
+		)
+		values
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{ilno}
+			, #{inspNo}
+			, substring(now()::varchar, 1, 11)
+			, #{partNo}
+			, #{inspNo}
+			, #{insCode}
+			, #{insType}
+			, #{insMeth}
+			, #{jugCodeh}
+			, #{insUnit}
+			, #{judge}
+			, #{sample1}
+			, #{sample2}
+			, #{sample3}
+			, #{sample4}
+			, #{sample5}
+			, #{remark}
+			, now()
+			, #{maker}
+			, 'N'
+			, #{dlvNo}
+			, #{dlvSeq}
+		)
+		on conflict on constraint
+			qat0010_pk
+		do update set
+			  judge		 = #{judge}
+			, sample1    = #{sample1}
+			, sample2    = #{sample2}
+			, sample3    = #{sample3}
+			, sample4    = #{sample4}
+			, sample5    = #{sample5}
+			, edit_date    = now()
+			, editor       = #{editor}		
+		;
+    </insert>	
+
+
+    <!-- 검사내역 취소(삭제) -->
+    <delete id="deleteQat0060" parameterType="kr.co.igns.business.qat.model.qat0060.Qat0060VO">
+		delete from qat0010
+		 where com_code = #{comCode}
+		   and fac_code = #{facCode}
+		   and part_no = #{partNo}
+		   and ins_code = #{insCode}
+		   and ilno = #{ilno}
+		   and serial_no = #{serialNo}
+    </delete>
+
+</mapper>

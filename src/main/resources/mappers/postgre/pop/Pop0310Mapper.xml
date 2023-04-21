@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+    <!--전산번호 조회-->
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0310Dao">
+	<select id="getPop0310" parameterType="kr.co.igns.business.pop.model.Pop0310ReqDto" resultType="kr.co.igns.business.pop.model.Pop0310VO" >
+select c.loc_name
+	  ,  b.part_no 
+	  ,  b.part_name
+	  , a.lot_no 
+	  , a.lot_detail
+	  , a.stock_qty 
+	   , a.regi_date 
+	   , a.stock_type
+	   , a.stock_amount
+	   , a.loc_code
+	   , b.lot_size
+	   , trunc(a.stock_amount::integer / a.stock_qty::integer)::text as unitPrice
+	from mat0021 a
+	inner join bas0040 b
+	on a.part_no = b.part_no
+	and a.com_code = b.com_code 
+	inner join bas0033 c 
+	on a.com_code = c.com_code 
+	and a.fac_code = c.fac_code 
+	and a.loc_code = c.loc_code 
+	where a.lot_detail = #{lotDetail}
+	and a.com_code = #{comCode}	
+</select>
+         
+	    <!--팝업 품목코드 조회-->
+<select id="getpartNo" parameterType="kr.co.igns.business.pop.model.Pop0310ReqDto" resultType="kr.co.igns.business.pop.model.Pop0310VO" >	
+		select part_no
+		from bas0040
+		where com_code = #{comCode}
+</select>
+
+    <!--팝업 창고명 조회-->
+<select id="getwhNm" parameterType="kr.co.igns.business.pop.model.Pop0310ReqDto" resultType="kr.co.igns.business.pop.model.Pop0310VO" >	
+select loc_code,loc_name
+from bas0033 
+where com_code = #{comCode}
+and fac_code = #{facCode}
+order by wh_code,loc_code
+</select>
+
+    <!--팝업 위치(공정)조회-->
+<select id="getwork" parameterType="kr.co.igns.business.pop.model.Pop0310ReqDto" resultType="kr.co.igns.business.pop.model.Pop0310VO" >	
+select work_code
+	 , work_decode
+	  ,work_dename
+from bas0035
+where com_code = #{comCode}
+and	  fac_code = #{facCode}
+</select>
+
+<!-- 재공조회 -->
+<select id="getworkprocess" parameterType="kr.co.igns.business.pop.model.Pop0310ReqDto" resultType="kr.co.igns.business.pop.model.Pop0310VO" >	
+select c.work_dename as proCode
+		,a.part_no
+		,b.part_name 
+		,a.lot_no
+		,a.lot_detail 
+		,a.qty
+		,d.pro_name as workDecode
+		,a.make_date
+		from pro0026 a
+		inner join bas0040 b 
+		on a.part_no  = b.part_no
+		and a.com_code =b.com_code 
+		inner join bas0035 c 
+on a.pro_code  = c.work_decode
+and a.com_code = c.com_code 
+and a.fac_code = c.fac_code
+inner join bas0031 d
+on c.work_code = d.pro_code 
+and a.com_code = c.com_code 
+and a.fac_code = c.fac_code  
+where a.com_code = #{comCode}
+and 	    a.fac_code = #{facCode}
+and  a.part_no like concat('%', #{partNo}, '%')
+and d.pro_code like concat('%', #{work}, '%' ) 
+and c.work_decode like concat('%', #{location}, '%' )
+</select>
+
+<!-- 재고조회 -->
+<select id="getstock" parameterType="kr.co.igns.business.pop.model.Pop0310ReqDto" resultType="kr.co.igns.business.pop.model.Pop0310VO" >	
+select c.loc_name
+	  ,  b.part_no 
+	  ,  b.part_name
+	  , a.lot_no 
+	  , a.lot_detail
+	  , a.stock_qty 
+	   , a.regi_date 
+	   , a.stock_type
+	   , a.stock_amount
+	   , a.loc_code
+	   , b.lot_size
+	   , trunc(a.stock_amount::integer / a.stock_qty::integer)::text as unitPrice
+from mat0021 a
+inner join bas0040 b 
+on a.part_no = b.part_no
+and a.com_code = b.com_code
+inner join bas0033 c 
+on a.loc_code = c.loc_code 
+and a.com_code = c.com_code 
+and a.fac_code = c.fac_code
+where a.part_no like concat('%', #{partNo}, '%')
+and a.loc_code  like concat('%', #{locCode}, '%')
+and a.stock_qty::integer > 0
+order by loc_code,lot_detail
+</select>
+
+   <insert id="createMat0021" parameterType="kr.co.igns.business.pop.model.Pop0310VO">
+   	<selectKey resultType="String" keyProperty="popLotDetail" order="BEFORE">
+SELECT 'POP' || to_char(now(),'yymmdd') || lpad((right(coalesce(max(lot_detail),'0'),4)::integer +1)::text,4,'0')
+FROM MAT0021
+WHERE com_code = #{comCode}
+and  fac_code = #{facCode}
+and lot_detail LIKE 'POP' || '%'
+and regi_date = to_char(now(), 'YYYY-MM-DD')
+ </selectKey>
+ 	 <![CDATA[
+insert into mat0021
+(
+	 com_code
+	,fac_code
+	,loc_code
+	,stock_type
+	,event_cd
+	,part_no
+	,stock_qty
+	,stock_amount
+	,regi_date
+	,lot_no
+	,lot_detail
+	,user_flag
+	,make_date
+	,maker
+)
+VALUES
+(
+		 #{comCode}
+		,#{facCode}
+		,#{locCode}
+		,#{stockType}
+		,(select sys_code from bas0011 where code = 'LOT_TYPE' and sort_flag = '1')
+		,#{partCode}
+		,#{stockQty} 
+		,(#{stockQty}::integer * #{unitPrice}::integer)::text
+		,#{regiDate}
+		,#{lotNumber}
+		,#{popLotDetail}
+		,#{userFlag}
+		,Now()
+		,#{maker}
+);
+
+insert into pro0019
+(
+	 com_code
+	,fac_code
+	,regi_date
+	,lot_type 
+	,wh_code
+	,part_no
+	,lot_detail
+	,qty
+	,amount
+	,old_lot_detail
+	,old_qty
+	,old_amount
+	,user_flag
+	,make_date
+	,maker
+	,no
+)
+values
+(
+	 #{comCode}
+	,#{facCode}
+	,#{regiDate}
+	,'10'
+	,#{locCode}
+	,#{partCode}
+	,#{popLotDetail}
+	,#{stockQty}
+	,(#{stockQty}::integer * #{unitPrice}::integer)::text
+	,#{lotDetail}
+	,#{stockQty}
+	,#{stockAmount}
+	,#{userFlag}
+	,Now()
+	,#{maker}
+	,'1'
+)
+]]>
+    </insert>
+ 
+<update id="updateMat0021" parameterType="kr.co.igns.business.pop.model.Pop0310VO">
+ update mat0021
+set stock_qty = (stock_qty::integer - #{stockQty}::integer)::text
+	,stock_amount = (stock_amount::integer - (#{stockQty}::integer * #{unitPrice}::integer))::text
+	,edit_date = Now()
+where com_code  = #{comCode}
+and 		fac_code = #{facCode}
+and		part_no =#{partCode}
+and 		loc_code = #{locCode}
+and 		lot_detail = #{lotDetail}
+    </update>
+</mapper>

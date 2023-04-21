@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Sal0140Dao">
+        
+	<!-- 반품등록 출하정보상세 조회 -->
+    <select id="getSal0120" parameterType="kr.co.igns.business.sales.model.sal0140.Sal0120ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0140.Sal0120VO">
+        SELECT row_number() over(order by a.out_date, ilno desc) as id
+        	 , a.com_code
+        	 , a.fac_code
+        	 , a.ord_no
+        	 , a.ilno
+        	 , a.no
+        	 , a.out_date
+        	 , a.out_insp_yn
+        	 , b.cust_name
+        	 , a.part_no
+        	 , c.part_name
+        	 , a.lot_no
+        	 , a.lot_detail
+        	 , a.stock_qty
+        	 , a.qty
+        	 , (
+        	 	select coalesce(sum(ret_qty::integer)::text, '0')
+        	 	  from sal0140
+        	 	 where com_code = a.com_code
+        	 	   and fac_code = a.fac_code
+        	 	   and lot_detail = a.lot_detail
+        	 	   and ilno = a.ilno
+        	 	) as ret_qty
+        	 , a.price
+        	 , a.amount
+        	 , a.close_month
+        	 , a.close_yn
+        	 , a.confirm_yn
+        	 , a.remark
+        FROM sal0120 a
+        JOIN bas0023 b ON a.com_code = b.com_code
+        			  AND a.cust_code = b.cust_code
+        JOIN bas0040 c on a.com_code = c.com_code
+                      and a.part_no = c.part_no
+        <where>
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND a.com_code = #{comCode}
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND a.fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="custCode != null and custCode != ''">
+				<![CDATA[
+					AND a.cust_code = #{custCode}
+				]]>
+			</if>
+			<if test="partNm != null and partNm != ''">
+				<![CDATA[
+					AND upper(c.part_name) like '%' || upper(#{partNm}) || '%'
+				]]>
+			</if>
+			<if test="workFrDate != null and workFrDate != '' and workDate != null and workDate != ''" >
+				<![CDATA[
+					AND a.out_date between #{workFrDate} and #{workDate}
+				]]>
+			</if>
+		</where>
+    </select>
+    
+    <!-- 반품내역 조회 -->
+    <select id="getSal0140" parameterType="kr.co.igns.business.sales.model.sal0140.Sal0140ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0140.Sal0140VO">
+        SELECT row_number() over(order by a.ret_lot_detail, a.lot_detail) as id 
+        	 , a.com_code
+		     , a.fac_code
+			 , a.ilno
+			 , a.lot_no
+			 , a.ret_no
+			 , a.lot_detail
+			 , a.ret_lot_detail
+			 , a.ret_date
+			 , a.ret_code
+			 , a.ret_type
+			 , a.loc_code
+			 , a.ret_qty
+			 , a.remark
+			 , fn_username(a.com_code, a.maker) as maker
+			 , a.make_date
+			 , fn_username(a.com_code, a.editor) as editor
+			 , a.edit_date
+        FROM
+        	sal0140 AS a
+        <where>
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND a.com_code = #{comCode}
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND a.fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="ilno != null and ilno != ''">
+				<![CDATA[
+					AND a.ilno = #{ilno}
+				]]>
+			</if>
+			<if test="lotNo != null and lotNo != ''">
+				<![CDATA[
+					AND a.lot_no = #{lotNo}
+				]]>
+			</if>
+			<if test="lotDetail != null and lotDetail != ''">
+				<![CDATA[
+					AND a.lot_detail = #{lotDetail}
+				]]>
+			</if>
+			
+		</where>
+    </select>
+    <select id="getRetNo" parameterType="kr.co.igns.business.sales.model.sal0140.Sal0140VO" resultType="String">	
+    		select 'RT' || to_char(now(), 'yymmdd-') || lpad((coalesce(right(max(ret_no), 4), '0')::integer + 1)::text, 4, '0') as retNo
+			  from sal0140
+		 	 where com_code = #{comCode}
+		 	   and fac_code = #{facCode}
+		 	   and ret_date = to_char(NOW(), 'YYYY-MM-DD')
+    </select>
+    <select id="getRetLotDetail" parameterType="kr.co.igns.business.sales.model.sal0140.Sal0140VO" resultType="String">
+    		   select 'INR' || to_char(now(),'YYMMDD-') || lpad((coalesce(right(max(ret_lot_detail), 4), '0')::integer + 1)::text, 4, '0') 
+				 from sal0140
+				where com_code = #{comCode}
+				  and fac_code = #{facCode} 
+				  and SUBSTRING(ret_lot_detail, 4, 6)= TO_CHAR(NOW(), 'YYMMDD')
+    </select>
+    <select id="getPrice" parameterType="kr.co.igns.business.sales.model.sal0140.Sal0140VO" resultType="String">
+    		SELECT price
+    		  FROM sal0120
+    		 WHERE com_code = #{comCode}
+    		   AND fac_code = #{facCode}
+    		   AND ilno = #{ilno}
+    		   AND lot_detail = #{lotDetail}
+    </select>
+    
+    <!-- 반품등록 -->
+	<insert id="insertSal0140" parameterType="kr.co.igns.business.sales.model.sal0140.Sal0140VO">
+	<![CDATA[
+    	INSERT INTO sal0140
+    	(
+    		com_code,
+			fac_code,
+			ilno,
+			lot_no,
+			lot_detail,
+			ret_no,
+			ret_lot_detail,
+			ret_code,
+			ret_type,
+			loc_code,
+			ret_qty,
+			remark,
+			make_date,
+			maker,
+			ret_date			  
+		)
+		values
+		(
+			#{comCode},
+    		#{facCode},
+    		#{ilno},
+    		#{lotNo},
+    		#{lotDetail},
+			#{retNo},
+    		#{retLotDetail},
+    		#{retCode},
+    		#{retType},
+    		#{locCode},
+    		#{retQty},
+    		#{remark},
+    		now(),
+    		#{maker},
+    		to_char(now(), 'yyyy-mm-dd')    		 
+		)
+		]]>
+    </insert>
+    
+    <!-- 반품내역 삭제 -->
+    <delete id="deleteSal0140" parameterType="kr.co.igns.business.sales.model.sal0140.Sal0140VO">
+	   	DELETE 
+	   	FROM sal0140
+	   	<where>
+		   <if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND com_code = #{comCode}
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="ilno != null and ilno != ''">
+				<![CDATA[
+					AND ret_no = #{retNo}
+				]]>
+			</if>
+			<if test="retLotDetail != null and retLotDetail != ''">
+				<![CDATA[
+					AND ret_lot_detail = #{retLotDetail}
+				]]>
+			</if>
+		</where>
+    </delete>  
+    
+    
+    <insert id="upsertMat0020" parameterType="kr.co.igns.business.sales.model.sal0140.Mat0020Dto">
+    	INSERT INTO mat0020 as a
+    	  (
+    		  com_code
+			, fac_code
+			, loc_code
+			, part_no
+			, stock_qty
+			, stock_amount
+			, make_date
+			, maker
+		)
+		VALUES
+		(
+			  #{comCode}
+			, #{facCode}
+			, #{locCode}
+			, #{partNo}
+			, #{stockQty}
+			, #{stockAmount}
+			, now()
+			, #{maker}
+		)
+    	ON CONFLICT(com_code, fac_code, loc_code, part_no)
+    	DO UPDATE
+    		  SET stock_qty = a.stock_qty::integer + #{stockQty}::integer
+    		    , stock_amount = a.stock_amount::integer + #{stockAmount}::integer
+    		    , editor = #{editor}
+    		    , edit_date = now()
+    </insert>
+    
+    <update id="updateMat0021" parameterType="kr.co.igns.business.sales.model.sal0140.Mat0020Dto">
+    	UPDATE mat0021
+		   SET stock_qty = stock_qty::integer + #{stockQty}::integer
+			 , stock_amount	= stock_amount::integer + #{stockAmount}::integer
+			 , edit_date = now()
+			 , editor = #{editor}
+		 WHERE com_code = #{comCode}
+	       AND fac_code = #{facCode}
+	 	   AND part_no = #{partNo}
+	   	   AND lot_detail = #{lotDetail}	  
+    </update>
+    <insert id="insertMat0021" parameterType="kr.co.igns.business.sales.model.sal0140.Mat0020Dto">
+    	INSERT INTO mat0021
+	    	(
+	    		  com_code
+				, fac_code
+				, loc_code
+				, stock_type
+				, event_cd
+				, part_no
+				, stock_qty
+				, stock_amount
+				, regi_date
+				, lot_no
+				, lot_detail
+				, make_date
+				, maker
+			)
+		VALUES
+			(
+				  #{comCode}
+				, #{facCode}
+				, #{locCode}
+				, fn_part_item_type(#{comCode}, #{partNo})
+				, '40'
+				, #{partNo}
+				, #{stockQty}
+				, #{stockAmount}
+				, substr(now()::text, 1, 10)
+				, #{lotNo}
+				, #{lotDetail}
+				, now()
+				, #{maker}
+			)
+    </insert>
+	<update id="updateMat0020" parameterType="kr.co.igns.business.sales.model.sal0140.Mat0020Dto">
+		   UPDATE mat0020
+    		  SET stock_qty = stock_qty::integer + #{stockQty}::integer
+    		    , stock_amount = stock_amount::integer + #{stockAmount}::integer
+    		    , editor = #{editor}
+    		    , edit_date = now()
+    		WHERE com_code = #{comCode}
+    		  AND fac_code = #{facCode}
+    		  AND loc_code = #{locCode}
+    		  AND part_no = (
+	    		  				 SELECT part_no
+	    		  				   FROM mat0021 
+	    		  				  WHERE com_code = #{comCode}
+	    		  				    AND fac_code = #{facCode}
+	    		  				    AND lot_detail = #{retLotDetail}
+    		  				 )
+	</update>
+	
+	<delete id="deleteMat0021" parameterType="kr.co.igns.business.sales.model.sal0140.Mat0020Dto">
+		DELETE FROM mat0021
+		 WHERE com_code = #{comCode}
+		   AND fac_code = #{facCode}
+		   AND lot_detail = #{retLotDetail}
+	</delete>
+</mapper>

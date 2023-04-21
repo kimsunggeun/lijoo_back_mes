@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.baseInfo.bas0310.dao.postgre.Bas0310Dao">
+
+    <!-- 거래처명 GET -->
+    <select id="getCustomName" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310ReqDto" resultType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310VO">        
+		select cust_code
+			 , cust_name
+			 , cust_type
+			 , mat_type
+			 , fn_comcodenm(com_code,'BIZ_GROUP', cust_type) as custTypeNm
+			 , fn_comcodenm(com_code,'BIZ_TYPE', mat_type) as matTypeNm
+			 , make_date 
+			 , fn_username(com_code, maker) as maker
+			 , edit_date
+			 , fn_username(com_code, editor) as editor
+		  from bas0023
+		 where com_code = #{comCode}
+		<if test="custCode != null and custCode != ''">
+		   and cust_code = #{custCode}
+		</if>
+		<if test="custType != null and custType != ''">
+		   and cust_type  = #{custType}
+		</if>
+    </select>
+    
+    <!-- 품목정보 GET -->
+    <select id="getItemInfo" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310ReqDto" resultType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310VO">        
+		select part_no
+			 , fn_partname(com_code, part_no) as partName
+			 , fn_partspec(com_code, part_no) as partSpec
+			 , user_flag
+			 , fn_username(com_code, maker) as maker
+			 , make_date
+			 , fn_username(com_code, editor) as editor
+			 , edit_date
+		  from bas0044
+		 where com_code = #{comCode}
+		   and cust_code = #{custCode}
+    </select>
+    
+    <!-- 품목 마스터 리스트 -->
+    <select id="getPartList" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310ReqDto" resultType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310VO">        
+		select part_no
+			 , part_name
+			 , spec as partSpec
+			 , lot_size
+			 , in_insp
+			 , out_insp
+			 , sup_insp
+			 , remark
+		  from bas0040
+		 where com_code = #{comCode}
+    </select>
+    
+    <!-- 거래처별 품목정보 등록 -->
+    <insert id="setCustPart" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310PartDto">
+		INSERT INTO BAS0044(com_code, part_no, cust_code, user_flag, make_date, maker)
+		VALUES(#{comCode}, #{partNo}, #{custCode}, #{userFlag}, now(), #{maker});        
+    </insert>
+    
+    <!-- 거래처별 품목정보 수정 -->
+    <update id="updateCustPart" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310PartDto">
+		UPDATE BAS0044
+			SET user_flag = #{userFlag},
+				edit_date = now(),
+				editor = #{editor}
+			WHERE com_code = #{comCode}
+			AND part_no = #{partNo}
+			AND cust_code = #{custCode};
+    </update>   
+    
+     <!-- 거래처별 품목정보 삭제 -->
+    <delete id="delCustPart" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310ReqDto">        
+		DELETE FROM bas0044
+		WHERE com_code= #{comCode} 
+		  AND part_no= #{partNo} 
+		  AND cust_code= #{custCode};
+    </delete>
+    
+    <!-- 단가정보 GET -->
+    <select id="getPriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310ReqDto" resultType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310PriceVO">        
+		SELECT com_code
+			 , part_no
+			 , cust_code
+			 , app_start_date
+			 , app_end_date
+			 , modi_yn
+			 , app_yn as appYN
+			 , price
+			 , unit
+			 , remark
+			 , user_flag
+			 , make_date
+			 , fn_username(com_code, maker) as maker
+			 , edit_date
+			 , fn_username(com_code, editor) as editor
+		  FROM bas0045
+		 WHERE com_code = #{comCode}
+		   AND part_no = #{partNo}
+		   AND cust_code = #{custCode}
+		 order by app_start_date desc;
+    </select>
+    
+    <!-- 단가정보 등록 -->
+    <insert id="createPriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310PriceDto">
+
+    	<!-- 적용단가는 1개여야하며 등록하면 최근 단가를 적용한다  -->
+    	<if test='appYN = "Y"'>
+    			UPDATE BAS0045 AS A
+    			   SET APP_YN = 'N', 
+    			   	   app_end_date = #{appStartDate}
+    			FROM (SELECT * 
+    				  FROM bas0045 
+    			 	 WHERE COM_CODE = #{comCode}
+    	  		       AND PART_NO = #{partNo}
+    	  		       AND CUST_CODE = #{custCode}
+    	  		       AND app_yn = 'Y'
+    	  		       LIMIT 1) AS B
+    			 WHERE A.COM_CODE = B.COM_CODE
+    	  		   AND A.PART_NO = B.PART_NO
+    	  		   AND A.CUST_CODE = B.CUST_CODE
+    	  		   AND A.app_start_date = B.app_start_date;    	
+    	</if>
+    	  
+    	INSERT INTO bas0045
+			(com_code, part_no, cust_code, app_start_date, app_end_date, modi_yn, app_yn, price, unit, remark, user_flag, 
+			make_date, maker, edit_date, editor)
+		VALUES(#{comCode}, #{partNo}, #{custCode}, #{appStartDate}, #{appEndDate}, #{modiYN}, #{appYN}, #{price}, #{unit}, #{remark}, #{userFlag}, 
+			now(), #{maker}, now(), #{editor});
+    </insert>
+    
+    <!-- 단가정보 수정 -->
+    <update id="updatePriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310PriceDto">
+    	<if test='appYN = "Y"'>
+    		UPDATE bas0045
+    			SET app_yn = 'N'
+    		WHERE com_code = #{comCode} 
+			   AND part_no= #{partNo} 
+			   AND cust_code= #{custCode};
+    	</if>
+	    UPDATE bas0045
+		   SET app_end_date = #{appEndDate}, 
+		   	   modi_yn = #{modiYN}, 
+		   	   app_yn = #{appYN}, 
+		   	   price = #{price}, 
+		   	   unit = #{unit}, 
+		   	   remark = #{remark}, 
+		   	   user_flag = #{userFlag}, 
+		   	   edit_date = now(), 
+		   	   editor= #{editor}
+		 WHERE com_code = #{comCode} 
+		   AND part_no= #{partNo} 
+		   AND cust_code= #{custCode}
+		   AND app_start_date= #{appStartDate};
+    </update>
+    
+    <!-- 단가정보 삭제 -->
+    <delete id="delPriceInfo" parameterType="kr.co.igns.business.baseInfo.bas0310.model.Bas0310PriceDto">
+        DELETE FROM bas0045
+		 WHERE com_code = #{comCode}
+		   AND part_no = #{partNo} 
+		   AND cust_code = #{custCode}
+		   AND app_start_date = #{appStartDate};
+		   
+        <if test='appYN.equals("Y")'>
+    		UPDATE bas0045
+    			SET app_yn = 'Y'
+    		WHERE com_code = #{comCode} 
+			   AND part_no= #{partNo} 
+			   AND cust_code= #{custCode}
+			   AND app_start_date = (select max(app_start_date) as app_start_date 
+			   						from bas0045 
+    								WHERE com_code = #{comCode} 
+			   						  AND part_no= #{partNo} 
+			   						  AND cust_code= #{custCode});
+    	</if>
+    </delete>
+    
+</mapper>

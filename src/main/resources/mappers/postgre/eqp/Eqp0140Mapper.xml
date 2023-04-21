@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.eqp.dao.postgre.Eqp0140Dao">
+        
+	<!-- 계측기 마스터 조회 -->
+    <select id="getEqp0140" parameterType="kr.co.igns.business.eqp.model.eqp0140.Eqp0140Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0140.Eqp0140VO">
+        	select
+			b.com_code,
+			b.fac_code,
+			b.mea_gr,
+			b.mea_code,
+			b.mea_name,
+			b.mea_spec,
+			b.mea_grade,
+			b.mea_state,
+			b.dep_code,
+			b.name,
+			b.ass_no,
+			b.pro_companny,
+			b.sup_companny,
+			b.manu_date,
+			b.pur_date,
+			b.corr_yn,
+			b.corr_agency,
+			b.corr_month,
+			e.corr_date_old,
+			e.corr_date,
+			e.corr_date_new,
+			e.corr_no,
+			e.corr_judge,
+			e.corr_reason,
+			e.ins_image,
+			e.remark,
+			b.corr_sdate,
+			b.corr_edate,
+			b.corr_std,
+			b.corr_max,
+			b.corr_min,
+			b.model_no,
+			e.user_flag,
+			e.make_date,
+			e.maker,
+			e.edit_date,
+			e.editor
+        	from bas0082 b
+        	join eqp0020 e on b.com_code = e.com_code and b.fac_code = e.fac_code and b.mea_code = e.mea_code
+         <where>
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND e.com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="facCode != null and facCode != ''">
+				<![CDATA[
+					AND e.fac_code = #{facCode}
+				]]>
+			</if>
+			<if test="meaGr != null and meaGr != ''" >
+				<![CDATA[
+					AND e.mea_gr = #{meaGr}
+				]]>
+			</if>
+			<if test="meaName != null and meaName != ''">
+				<![CDATA[
+					AND b.mea_name = #{meaName}
+				]]>
+			</if>
+			<if test="corrDate != null and corrDate != ''">
+				<![CDATA[
+					AND e.corr_date LIKE '${corrDate}-%'
+				]]>
+			</if>
+		</where>
+    </select>
+     
+</mapper>

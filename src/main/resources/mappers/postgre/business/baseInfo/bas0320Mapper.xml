@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.baseInfo.bas0320.dao.postgre.Bas0320Dao">
+
+    <!-- 환율 조회 -->
+    <select id="getExrateInfoManage" parameterType="kr.co.igns.business.baseInfo.bas0320.model.Bas0320Dto" resultType="kr.co.igns.business.baseInfo.bas0320.model.Bas0320VO">        
+        select row_number() over() as id
+        	 , com_code
+		     , curr_date 
+		     , curr_code 
+		     , fn_comcodenm(com_code, 'CURR_CODE', curr_code)	as curr_name
+		     , price 
+		     , fn_username(com_code, maker)						as maker
+		     , make_date
+		     , fn_username(com_code, editor)					as editor
+		     , edit_date
+		  from bas0050
+		 where com_code  = #{comCode}
+		   and curr_date between #{dtFrom} and #{dtTo} 
+		<if test='currCode != null and !currCode.equals("")'>
+		   and curr_code = #{currCode}
+		</if>
+		order by curr_date
+    </select>   
+    
+     	<!-- 품질기준정보 set -->
+    <insert id="setExrateInfoManage" parameterType="kr.co.igns.business.baseInfo.bas0320.model.Bas0320VO">
+		insert into bas0050 
+		(
+			com_code
+			, curr_date
+			, curr_code
+			, price
+			, make_date
+			, maker
+		)
+		values
+		( 
+			#{comCode}
+			 , #{currDate}
+			 , #{currCode}
+			 , #{price}
+			 , now()
+			 , #{maker}
+		)
+		on conflict (com_code, curr_date, curr_code) 
+		do update 
+		set price = #{price}
+		  , editor = #{maker}
+		  , edit_date = now()
+    </insert>
+</mapper>

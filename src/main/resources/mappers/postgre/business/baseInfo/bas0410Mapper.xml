@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.baseInfo.bas0410.dao.postgre.Bas0410Dao">
+
+    <!-- 검사유형 Master -->
+    <select id="getInspecType" parameterType="kr.co.igns.business.baseInfo.bas0410.model.Bas0410ReqDto" resultType="kr.co.igns.business.baseInfo.bas0410.model.Bas0410VO">        
+		select com_code, sys_code AS insCode, sys_name as insName 
+		from bas0011
+		where com_code = #{comCode}
+		and CODEGR = #{codegr}
+		and CODE = #{code}
+		and user_flag = 'Y';
+    </select>  
+     
+    <!-- 검사항목 Item -->
+    <select id="getInspecItem" parameterType="kr.co.igns.business.baseInfo.bas0410.model.Bas0410ReqDto" resultType="kr.co.igns.business.baseInfo.bas0410.model.Bas0410VO">        
+        SELECT com_code,
+        	   ins_code,
+        	   ins_type,
+			   ins_meth,
+			   jug_codeh,
+			   user_flag,
+			   make_date,
+			   fn_username(com_code, maker) as maker,
+			   edit_date ,
+			   fn_username(com_code, editor) as editor 
+   	      FROM bas0060
+   	     WHERE com_code = #{comCode} 
+   	       AND ins_code = #{insCode} 
+    </select> 
+    
+    <!-- 검사항목 등록 -->
+    <insert id="setInspecItem" parameterType="kr.co.igns.business.baseInfo.bas0410.model.Bas0410VO">
+		INSERT INTO BAS0060
+		(com_code, ins_code, ins_type, ins_meth, jug_codeh, user_flag, make_date, maker, edit_date, editor)
+		VALUES	
+		(#{comCode}, #{insCode}, #{insType}, #{insMeth}, #{jugCodeh}, #{userFlag}, now(), #{maker}, now(), #{maker})
+    </insert>
+    
+    <!-- 검사항목 Update -->
+    <update id="modiInspecItem" parameterType="kr.co.igns.business.baseInfo.bas0410.model.Bas0410VO">
+    	UPDATE BAS0060
+		   SET jug_codeh = #{jugCodeh}
+			 , user_flag = #{userFlag}
+			 , edit_date = now()
+			 , editor    = #{editor}   
+		 WHERE com_code = #{comCode}
+		   AND ins_code = #{insCode} 
+		   AND ins_type = #{insType} 
+		   AND ins_meth = #{insMeth} 
+    </update>
+    
+    <!-- 검사항목 삭제 -->
+	<delete id="delInspItem" parameterType="kr.co.igns.business.baseInfo.bas0410.model.Bas0410ReqDto">
+    	DELETE FROM bas0060
+		WHERE com_code = #{comCode}
+		  AND ins_code = #{insCode} 
+		  AND ins_type = #{insType} 
+		  AND ins_meth = #{insMeth};
+    </delete>
+    
+</mapper>

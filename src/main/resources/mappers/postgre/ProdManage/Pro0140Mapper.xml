@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.co.igns.business.ProdManage.dao.postgre.Pro0140Dao">
+
+    <!-- 설비 가동/비가동 현황 -->
+    <select id="getPro0140" parameterType="kr.co.igns.business.ProdManage.model.pro0140.Pro0140ReqDto" 
+    						resultType="kr.co.igns.business.ProdManage.model.pro0140.Pro0140VO">
+		select 
+  			 a.com_code   
+ 			,a.fac_code   
+			,a.non_ilno	
+ 			,a.no	 		
+			,a.work_no	
+ 			,a.work_date	
+ 			,a.eq_Code	
+ 			,a.work_code	
+ 			,a.work_decode
+			,a.stop_Code
+ 			,to_char(a.start_time,'YYYY-MM-DD HH24:MI') as start_time
+ 			,to_char(a.end_time,'YYYY-MM-DD HH24:MI') as end_time
+ 			,a.stop_time
+ 			,a.remark     
+ 			,a.make_date  
+ 			,a.maker      
+ 			,a.edit_date  
+ 			,a.editor
+ 			,b.eq_name
+ 			,c.work_name
+ 			,d.work_dename
+		from eqp0010 a
+		inner join bas0036 b on a.eq_code = b.eq_code
+		inner join bas0034 c on a.work_code = c.work_code
+		inner join bas0035 d on a.work_decode = d.work_decode
+		where a.com_code = #{comCode}
+    		and a.fac_code = #{facCode}
+    		--and a.stop_code != null and a.stop_code != ''
+    		and a.work_date between #{frPlanDate} and #{toPlanDate}
+    	
+    	<if test="workCode != null and workCode != ''">
+			and a.work_code = #{workCode}
+		</if>
+		<if test="workDecode != null and workDecode != ''">
+			and a.work_decode = #{workDecode}
+		</if>
+		<if test="eqCode != null and eqCode != ''">
+			and a.eq_code = #{eqCode}
+		</if>
+		<if test="stopCode != null and stopCode != ''">
+			and a.stop_code = #{stopCode}
+		</if>
+		order by a.no
+    </select>
+    <!-- 작업반 정보 -->
+    <select id="getBas0035" parameterType="kr.co.igns.business.ProdManage.model.pro0140.Pro0140ReqDto" 
+    						resultType="kr.co.igns.business.ProdManage.model.pro0140.Pro0140VO">
+    	select work_decod, work_dename
+    	from bas0035
+    	where com_code = #{comCode}
+    	and fac_code = #{facCode}
+   	<if test="workCode != null and workCode != ''">
+		and work_code = #{workCode}	
+	</if>    
+    </select>
+</mapper>

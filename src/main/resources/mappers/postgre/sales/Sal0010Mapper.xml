@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.sales.dao.postgre.Sal0010Dao">
+        
+	<!-- 품목 정보 조회 -->
+    <select id="getItemInfo" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+	select a.com_code
+		 , a.cust_code
+		 , a.part_no
+		 , b.part_name
+		 , b.spec
+		 , b.unit
+		 , b.part_type
+		 , d.price
+	from bas0044 a
+	join bas0040 b on a.com_code = b.com_code 
+				  and a.part_no = b.part_no 
+				  and b.user_flag = 'Y'
+	join bas0045 d on a.com_code = d.com_code 
+				  and a.cust_code  = d.cust_code 
+				  and a.part_no = d.part_no 
+				  and d.app_yn = 'Y' 
+				  and d.user_flag = 'Y'  
+	where a.com_code = #{comCode}
+	  and a.cust_code = #{custCode}
+	  and a.user_flag = 'Y'
+	  and b.part_type != '10'
+    </select>        
+        
+	<!-- 수주정보 조회 -->
+    <select id="getSal0010" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+        select row_number() over(order by a.ord_no) as id, a.*
+		from sal0010 a
+		where com_code  = #{comCode}
+	      AND fac_code  = #{facCode}
+	    <if test='custCode != null and !custCode.equals("")'>
+	      AND cust_code  = #{custCode}
+	    </if>
+	    <if test='ordState != null and !ordState.equals("")'>
+	      AND ord_state  = #{ordState}
+	    </if>
+		 AND ord_date between #{startDate} and #{endDate}
+    </select>
+    
+    <!-- 수주정보 저장 -->
+    <insert id="createSal0010" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+   	  	<selectKey keyProperty="maxOrdNo" resultType="string" order="BEFORE">
+   			select case when MAX(ord_no) is null
+		         			then 'OR' || to_char(now(), 'YYMMDD-') || '0001'
+		         		else 'OR' || to_char(now(), 'YYMMDD-') || lpad(((substring(MAX(ord_no), 10))::integer + 1)::text, 4, '0')
+		           end
+			from sal0010
+			where com_code = #{comCode}
+			  and fac_code = #{facCode}
+			  and ord_date = to_char(now(), 'YYYY-MM-DD')
+	  	</selectKey>
+    	insert into sal0010
+			(com_code
+			, fac_code
+			, ord_no
+			, ord_date
+			, cust_code
+			, ord_state
+			, remark
+			, make_date
+			, maker
+			)
+		values(
+			  #{comCode}
+			, #{facCode}
+			, #{maxOrdNo}
+			, #{ordDate}
+			, #{custCode}
+			, #{ordState}
+			, #{remark}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <!-- 수주정보 수정 -->
+    <update id="updateSal0010" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+    	update sal0010
+			set   ord_date		= #{ordDate}
+				, cust_code		= #{custCode}
+				, ord_state		= #{ordState} 
+				, remark   		= #{remark}  
+				, edit_date		= now()
+				, editor		= #{editor}
+			where com_code 		= #{comCode}
+			  and fac_code 		= #{facCode} 
+			  and ord_no 		= #{ordNo} 
+    </update>
+    
+    <update id="confirmSal0010" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+    	update sal0010
+			set   ord_date		= #{ordDate}
+				, cust_code		= #{custCode}
+				, ord_state		= '20'
+				, remark   		= #{remark}  
+				, edit_date		= now()
+				, editor		= #{editor}
+			where com_code 		= #{comCode}
+			  and fac_code 		= #{facCode} 
+			  and ord_no 		= #{ordNo} 
+    </update>
+    
+    <update id="confirmCancelSal0010" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+    	update sal0010
+			set   ord_date		= #{ordDate}
+				, cust_code		= #{custCode}
+				, ord_state		= '10'
+				, remark   		= #{remark}  
+				, edit_date		= now()
+				, editor		= #{editor}
+			where com_code 		= #{comCode}
+			  and fac_code 		= #{facCode} 
+			  and ord_no 		= #{ordNo} 
+    </update>
+    
+	<!-- 수주정보 delete -->
+    <delete id="deleteSal0010" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+	   	delete from sal0010
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+		  and ord_no   = #{ordNo}
+    </delete>  
+
+    <select id="NullCheck_Sal0011" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010VO"
+    							   resultType="kr.co.igns.business.sales.model.sal0010.Sal0010VO">
+	   	select * from sal0011
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+		  and ord_no   = #{ordNo}
+    </select>  
+    <!-- 수주세부정보 조회 -->
+    <select id="getSal0011" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010ReqDto" 
+    					resultType="kr.co.igns.business.sales.model.sal0010.Sal0011VO">
+        select 	row_number() over(order by a.ord_no, a.no) as id, a.*
+		from 	sal0011 a
+		where 	a.com_code = #{comCode}
+		and		a.fac_code = #{facCode}
+		and		a.ord_no = #{ordNo}
+    </select>
+    
+    <!-- 수주세부정보 저장 -->
+    <insert id="createSal0011" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0011VO">
+      	<selectKey keyProperty="maxNo" resultType="string" order="BEFORE">
+			select 
+				case when MAX(no) is null 
+			         then
+			            '1'
+			         else
+			            (MAX(no)::integer + 1)::text
+			         end
+			from sal0011 
+			where 1 = 1
+			  and ord_no = #{ordNo}
+	  	</selectKey>
+    	insert into sal0011
+			(com_code
+			, fac_code
+			, ord_no
+			, no
+			, deli_date
+			, part_no
+			, qty
+			, out_qty
+			, now_qty
+			, plan_qty
+			, price
+			, amount
+			, remark
+			, make_date
+			, maker
+			)
+		values(
+			#{comCode}
+			, #{facCode}
+			, #{ordNo}
+			, #{maxNo}
+			, #{deliDate}
+			, #{partNo}
+			, #{qty}
+			, '0'
+			, #{nowQty}
+			, '0'
+			, #{price}
+			, #{amount}
+			, #{remark}
+			, now()
+			, #{maker}
+			)
+    </insert>
+    
+    <!-- 수주세부정보 수정 -->
+    <update id="updateSal0011" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0011VO">
+    	update sal0011
+			set deli_date 		= #{deliDate}
+				, part_no		= #{partNo}
+				, qty			= #{qty}
+				, out_qty		= #{outQty}
+				, now_qty		= #{nowQty}
+				, plan_qty		= #{planQty}
+				, price			= #{price}
+				, amount		= #{amount}
+				, remark   		= #{remark}  
+				, edit_date		= now()
+				, editor		= #{editor}
+			where com_code 		= #{comCode}
+			  and fac_code 		= #{facCode} 
+			  and ord_no 		= #{ordNo} 
+			  and no 			= #{no} 
+    </update>
+    
+    <!-- 수주세부정보 delete -->
+    <delete id="deleteSal0011" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0011VO">
+	   	delete from sal0011
+	   	where com_code = #{comCode}
+	  	  and fac_code = #{facCode} 
+		  and ord_no   = #{ordNo}
+		  and no       = #{no}
+    </delete>  
+
+    <select id="outQtyCheck" parameterType="kr.co.igns.business.sales.model.sal0010.Sal0010ReqDto" 
+    					resultType="int">
+    					
+	    select COUNT(*) from sal0011
+		 where com_code = #{comCode}
+		   and ord_no = #{ordNo}
+		   and deli_date = #{deliDate}
+		   and part_no = #{partNo}
+		   and no = #{no}
+		   and out_qty::integer > 0;			
+    </select>
+  
+
+</mapper>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0091Dao">
+        
+	<!-- 자재소요량(생산계획기준) 조회 -->
+    <insert id="createMat0091" parameterType="kr.co.igns.business.mat.model.mat0091.Mat0091ReqDto" >
+        do $$
+			declare 
+				v_mat record;
+			begin
+				<!-- 자재소요량 마스터(생산계획기준) -->
+				insert into mat0019
+		    	(
+		    		  com_code
+					, fac_code
+					, regi_date
+					, from_date
+					, to_date
+					, make_date
+					, maker
+				)
+				values
+				(
+					  '${comCode}'
+					, '${facCode}'
+					, '${regiDate}'
+					, '${fromDate}'
+					, '${toDate}'
+					, now()
+					, '${maker}'
+				);
+				
+				<!-- 자재소요량(생산계획기준) -->
+				for v_mat in
+					select t1.*, coalesce(t2.plan_qty, '0') as amount
+					from	(
+						select	a.com_code, a.fac_code, '${regiDate}' as regi_date, a.work_date as plan_date, b.part_no
+						from 	(select '${comCode}' as com_code, '${facCode}' as fac_code,
+										to_char(generate_series(to_date( '${fromDate}','YYYY-MM-DD'), to_date( '${toDate}','YYYY-MM-DD'), '1 day'), 'YYYY-MM-dd') as work_date
+						) a,
+						(
+						select 	pa_part_no as part_no from bas0043
+						where 	path_type = '${pathType}'
+						and		pa_part_no in 
+								<foreach collection="partNoArray" item="type"  open="(" close=")" separator=",">
+									'${type}'
+								</foreach>
+						group by pa_part_no
+						order by pa_part_no
+						) b
+					) t1
+					left join pro0011 t2 on t1.plan_date = t2.plan_date and t1.part_no = t2.part_no
+				loop
+					insert into mat0015
+			    	(
+			    		  com_code
+						, fac_code
+						, regi_date
+						, plan_date
+						, part_no
+						, amount
+						, make_date
+						, maker
+					)
+					values
+					(
+						  v_mat.com_code
+						, v_mat.fac_code
+						, v_mat.regi_date
+						, v_mat.plan_date
+						, v_mat.part_no
+						, v_mat.amount
+						, now()   
+						, '${maker}'
+					);
+				end loop;
+				<!-- 자재소료량 상세(생산계획기준) -->
+				for v_mat in 
+					select 	t1.*, coalesce(t3.stock_qty, '0') as stock_qty, coalesce(t2.plan_qty, '0') as amount
+							, coalesce(t2.amount, '0') as reg_qty, row_number() over() as no
+					from 	(
+						select 	a.com_code, a.fac_code, '${regiDate}' as regi_date, a.work_date as plan_date, b.pa_part_no, b.part_no
+						from 	(select '${comCode}' as com_code, '${facCode}' as fac_code,
+										to_char(generate_series(to_date('${fromDate}','YYYY-MM-DD'), to_date( '${toDate}','YYYY-MM-DD'), '1 day'), 'YYYY-MM-dd') as work_date) a,
+								(
+									select 	com_code, pa_part_no, part_no from bas0043
+									where 	com_code = '${comCode}'
+									and		path_type = '${pathType}'
+									and		pa_part_no in
+											<foreach collection="partNoArray" item="type"  open="(" close=")" separator=",">
+												'${type}'
+											</foreach>
+									order by pa_part_no, part_no
+								) b
+					) t1
+					left join (
+						select 	a.plan_date, coalesce(a.plan_qty, '0') as plan_qty, b.part_no, coalesce(a.plan_qty, '0')::int * coalesce(b.amount, '0')::int as amount
+						from 	pro0011 a
+						join 	bas0043 b on a.part_no = b.pa_part_no 
+						where 	b.path_type = '${pathType}'
+						group by a.plan_date, b.part_no, a.plan_qty, b.amount
+						order by a.plan_date, b.part_no  
+					) t2 on t1.plan_date = t2.plan_date and t1.part_no = t2.part_no
+					left join (
+						select 	com_code, fac_code, part_no, sum(stock_qty::int) as stock_qty
+						from	mat0020
+						group by com_code, fac_code, part_no
+					) t3 on t1.com_code = t3.com_code and t1.fac_code = t3.fac_code and t1.part_no = t3.part_no
+				loop
+					insert into mat0016
+					(
+						  com_code
+						, fac_code
+						, regi_date
+						, plan_date
+						, pa_part_no
+						, stock_qty
+						, amount
+						, part_no
+						, no
+						, reg_qty
+						, make_date
+						, maker
+					)
+					values
+					(
+						  v_mat.com_code
+						, v_mat.fac_code
+						, v_mat.regi_date
+						, v_mat.plan_date 
+						, v_mat.pa_part_no
+						, v_mat.stock_qty
+						, v_mat.amount
+						, v_mat.part_no
+						, v_mat.no
+						, v_mat.reg_qty
+						, now()   
+						, '${maker}'
+					);
+				end loop;
+				
+				if v_mat.plan_date is null then
+					raise exception '데이터 오류.' using errcode = '99999';
+				end if;
+		end $$;
+	</insert>
+    
+    <delete id="deleteMat0091" parameterType="kr.co.igns.business.mat.model.mat0091.Mat0091ReqDto">
+    	do $$
+		begin
+			<!-- 자재소요량 마스터(생산계획기준) -->
+			delete	from mat0019 
+		   	where 	com_code = '${comCode}'
+		  	  and 	fac_code = '${facCode}' 
+		  	  and 	regi_date = '${regiDate}';
+		  	<!-- 자재소요량(생산계획기준) -->  
+		  	delete	from mat0015 
+		   	where 	com_code = '${comCode}'
+		  	  and 	fac_code = '${facCode}' 
+		  	  and 	regi_date = '${regiDate}';
+		  	<!-- 자재소료량 상세(생산계획기준) -->
+		  	delete	from mat0016 
+		   	where 	com_code = '${comCode}'
+		  	  and 	fac_code = '${facCode}'
+		  	  and 	regi_date = '${regiDate}';
+		end
+		$$
+    </delete>
+    
+    <!-- 자재소요량(생산계획기준) 상세 조회 -->
+    <select id="getMat0091" parameterType="kr.co.igns.business.mat.model.mat0091.Mat0091ReqDto" 
+    					 resultType="String">
+       select fn_getmat0091(#{comCode}, #{facCode}, #{regiDate}) as getMat0091;
+    </select>
+    
+</mapper>

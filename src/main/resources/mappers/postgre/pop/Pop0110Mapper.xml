@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.pop.dao.postgre.Pop0110Dao">
+	
+	<select id="getPop0110" parameterType="kr.co.igns.business.pop.model.Pop0110ReqDto" resultType="kr.co.igns.business.pop.model.Pop0110VO" >
+		select com_code as comCode
+			, fac_code as facCode
+			, part_no as partNo
+			, fn_partname(com_code,part_no) as partName
+			, lot_detail as lotDetail
+			, qty
+			, fn_workname(com_code,fac_code,work_code) as workName
+			, fn_workdename(com_code,fac_code,work_code,work_decode) as workDename
+			, lot_no as lotNo
+			, out_date as outDate
+		from pro0026
+		where com_code = #{comCode}
+		  and fac_code = #{facCode}
+		  and lot_detail = #{lotDetail}
+	</select>
+	
+	<update id="setPop0110" parameterType="kr.co.igns.business.pop.model.Pop0110ReqDto">
+		update pro0026
+		set com_code = #{comCode}
+		  , fac_code = #{facCode}	
+		  , wh_code = #{custCode}
+		  , cust_code = #{custCode}
+		  , event_cd = '10'
+		  ,	qty = #{qty}
+		  ,	out_qty = #{qty}
+		  ,	out_deli_qty = '0'
+		  , out_non_deli_qty = '0'
+		  , out_wait_deli_qty = #{qty}
+		  , out_date = to_char(now(), 'YYYY-MM-DD')
+		where com_code = #{comCode}
+		and fac_code = #{facCode}
+		and lot_detail = #{lotDetail}
+	</update>
+</mapper>

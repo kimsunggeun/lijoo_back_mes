@@ -1,0 +1,74 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+.temp-wmes-backend - IgnsApplication-classpath-arg-1674004949151.txt
+hs_err_pid16040.log
+.metadata/.gitignore
+.metadata/.plugins/com.genuitec.eclipse.devstyle/.gitignore
+.metadata/.plugins/com.genuitec.eclipse.monitor/.gitignore
+.metadata/.plugins/com.genuitec.eclipse.ui.common.platform/.gitignore
+.metadata/.plugins/org.eclipse.buildship.ui/.gitignore
+.metadata/.plugins/org.eclipse.core.resources/.projects/.org.eclipse.egit.core.cmp/.gitignore
+.metadata/.plugins/org.eclipse.core.resources/.root/.gitignore
+.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/history.version
+.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.index
+.metadata/.plugins/org.eclipse.core.resources/.root/.indexes/properties.version
+.metadata/.plugins/org.eclipse.core.resources/.safetable/.gitignore
+.metadata/.plugins/org.eclipse.e4.workbench/.gitignore
+.metadata/.plugins/org.eclipse.jdt.core/assumedExternalFilesCache
+.metadata/.plugins/org.eclipse.jdt.core/externalFilesCache
+.metadata/.plugins/org.eclipse.jdt.core/javaLikeNames.txt
+.metadata/.plugins/org.eclipse.jdt.core/nonChainingJarsCache
+.metadata/.plugins/org.eclipse.jdt.core/variablesAndContainers.dat
+.metadata/.plugins/org.eclipse.jdt.ui/.gitignore
+.metadata/.plugins/org.eclipse.m2e.logback.configuration/.gitignore
+.metadata/.plugins/org.eclipse.pde.core/.cache/.gitignore
+.metadata/.plugins/org.eclipse.tips.ide/.gitignore
+.metadata/.plugins/org.eclipse.ui.workbench/.gitignore
+.temp-wmes-backend - IgnsApplication-classpath-arg-1674018736923.txt
+.temp-wmes-backend - IgnsApplication-classpath-arg-1674030124976.txt
+hs_err_pid12100.log
+hs_err_pid15576.log
+hs_err_pid20968.log
+hs_err_pid6356.log
+hs_err_pid8884.log
+.temp-wmes-backend - IgnsApplication-classpath-arg-1674033011494.txt
+.temp-wmes-backend - IgnsApplication-classpath-arg-1674085233832.txt
+src/main/java/kr/co/igns/business/baseInfo/bas0220/model/Bas0220VO_BOM.java
+src/main/java/kr/co/igns/business/baseInfo/bas0220/model/Bas0220VO_ITEM.java
+src/main/java/kr/co/igns/business/pop/controller/Pop0210Controller.java.rej
+*.txt

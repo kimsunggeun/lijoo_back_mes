@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.eqp.dao.postgre.Eqp0010Dao">
+        
+
+    <select id="getMaingrd" resultType="kr.co.igns.business.eqp.model.eqp0010.Eqp0010VO">
+	select *
+	  from bas0011 as a 
+	 WHERE a.code LIKE 'JOB_TYPE' 
+	   and  a.user_flag like 'Y'
+	 order by sys_code;
+    </select>   
+    
+    <select id="getDetailgrd" parameterType="kr.co.igns.business.eqp.model.eqp0010.Eqp0010Dto" 
+    					resultType="kr.co.igns.business.eqp.model.eqp0010.Eqp0010DetailVO">
+		select *
+		from eqp0030 as a
+			<where>
+			
+			<if test="comCode != null and comCode != ''">
+				<![CDATA[
+					AND a.com_code = #{comCode}					
+				]]>
+			</if>
+			<if test="jobType != null and jobType != ''">
+				<![CDATA[
+					AND a.job_type = #{jobType}
+				]]>
+			</if>
+			<if test="eqInsType != null and eqInsType != ''" >
+				<![CDATA[
+					AND a.eq_ins_type = #{eqInsType}
+				]]>
+			</if>
+			<if test="eqInsCode != null and eqInsCode != ''">
+				<![CDATA[
+					AND a.eq_ins_code = #{eqInsCode}
+				]]>
+			</if>
+		</where>
+
+    </select>   
+    
+     <insert id="createEqp0010" parameterType="kr.co.igns.business.eqp.model.eqp0010.Eqp0010DetailVO">
+    		INSERT INTO public.eqp0030
+			(com_code, job_type, eq_ins_type, eq_ins_code, eq_ins_name, jug_code, user_flag, make_date, maker)
+			VALUES(#{comCode}, #{jobType}, #{eqInsType}, #{eqInsCode}, #{eqInsName},  #{jugCode}, #{userFlag}, now(), #{maker});
+    </insert>
+    
+    <update id="updateEqp0010" parameterType="kr.co.igns.business.eqp.model.eqp0010.Eqp0010DetailVO">
+   	UPDATE public.eqp0030
+	SET eq_ins_name=#{eqInsName}, jug_code=#{jugCode}, user_flag=#{userFlag}, edit_date=now(), editor=#{editor}
+	WHERE com_code=#{comCode} AND job_type=#{jobType} AND eq_ins_type=#{eqInsType} AND eq_ins_code=#{eqInsCode};
+   
+    </update>
+    
+    
+    <delete id="deleteEqp0010" parameterType="kr.co.igns.business.eqp.model.eqp0010.Eqp0010DetailVO">
+    DELETE FROM public.eqp0030 as a
+	<where>
+			
+		
+					AND a.com_code = #{comCode}					
+		
+					AND a.job_type = #{jobType}
+		
+		
+					AND a.eq_ins_type = #{eqInsType}
+			
+		
+					AND a.eq_ins_code = #{eqInsCode}
+					
+					AND a.eq_ins_name = #{eqInsName}
+			
+			
+		</where>
+    
+    </delete>
+    
+    
+    
+
+     
+</mapper>

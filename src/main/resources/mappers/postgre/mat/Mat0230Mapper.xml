@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+<mapper namespace="kr.co.igns.business.mat.dao.postgre.Mat0230Dao">
+        
+    <select id="getMat0014_mat0230" parameterType="kr.co.igns.business.mat.model.mat0230.Mat0230ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0230.Mat0230VO">
+        select 	a.com_code,
+		        a.fac_code,
+		        a.regi_date,
+		        a.ilno,
+		        a.no,
+		        a.part_no,
+		        a.lot_no,
+		        a.lot_detail,
+		        a.qty,
+		        a.remark,
+		        a.print_type,
+		        a.user_flag,
+		        a.make_date,
+		        fn_username(a.com_code, a.maker) as maker,
+		        a.edit_date,
+		        fn_username(a.com_code, a.editor) as editor,
+		        b.in_type, 
+		        b.cust_code, 
+		        c.part_name 
+		from 	mat0014 a
+		join mat0013 b on a.com_code = b.com_code and a.ilno = b.ilno 
+		join bas0040 c on a.com_code = c.com_code and a.part_no = c.part_no 
+		where 1=1
+		<if test='facCode != null and !facCode.equals("")'>
+		  AND a.fac_code = #{facCode}
+		</if>
+		<if test='custCode != null and !custCode.equals("")'>
+	      AND b.cust_code  = #{custCode}
+	    </if>
+		<if test='partNo != null and !partNo.equals("")'>
+		 AND a.part_no LIKE CONCAT('%', #{partNo}, '%')
+		</if>
+		<if test='partName != null and !partName.equals("")'>
+		 AND c.part_name LIKE CONCAT('%', #{partName}, '%')
+		</if>
+	    <if test='inType != null and !inType.equals("")'>
+	      AND b.in_type  = #{inType}
+	    </if>
+	    <if test='toRegiDate != null and !toRegiDate.equals("")'>
+		 AND a.regi_date between #{frRegiDate} and #{toRegiDate}
+		 </if>
+    </select>
+    
+    	<!-- mat0230 데이터 조회용 -->
+    <select id="getMat0018_mat0230" parameterType="kr.co.igns.business.mat.model.mat0230.Mat0230ReqDto" 
+    					resultType="kr.co.igns.business.mat.model.mat0230.Mat0230VO">
+        select 	a.com_code,
+        		a.fac_code,
+        		a.ord_no,
+        		a.no,
+        		a.regi_date,
+        		a.ilno,
+        		a.serial_no,
+        		a.part_no,
+        		a.lot_no,
+        		a.lot_detail,
+        		a.qty,
+        		a.remark,
+        		a.print_type,
+        		a.user_flag,
+        		a.make_date,
+        		fn_username(a.com_code, a.maker) as maker,
+        		a.edit_date,
+        		fn_username(a.com_code, a.editor) as editor,
+                b.in_type, 
+                c.cust_code, 
+                d.part_name 
+		from 	mat0018 a
+		join mat0012 b on a.com_code = b.com_code and a.ord_no = b.ord_no
+		join mat0010 c on a.com_code = c.com_code and b.ord_no  = c.ord_no
+		join bas0040 d on a.com_code = d.com_code and a.part_no = d.part_no 
+		where 1=1
+		<if test='facCode != null and !facCode.equals("")'>
+		  AND a.fac_code = #{facCode}
+		</if>
+		<if test='custCode != null and !custCode.equals("")'>
+	      AND c.cust_code  = #{custCode}
+	    </if>
+		<if test='partNo != null and !partNo.equals("")'>
+		 AND a.part_no LIKE CONCAT('%', #{partNo}, '%')
+		</if>
+		<if test='partName != null and !partName.equals("")'>
+		 AND d.part_name LIKE CONCAT('%', #{partName}, '%')
+		</if>
+	    <if test='inType != null and !inType.equals("")'>
+	      AND b.in_type  = #{inType}
+	    </if>
+	    <if test='toRegiDate != null and !toRegiDate.equals("")'>
+		 AND a.regi_date between #{frRegiDate} and #{toRegiDate}
+		 </if>
+
+		  
+    </select>
+    
+</mapper>
